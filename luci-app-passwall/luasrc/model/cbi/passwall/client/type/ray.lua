@@ -79,7 +79,16 @@ local nodes_list = {}
 local balancing_list = {}
 local fallback_list = {}
 local iface_list = {}
+local group_list = {}
+local group_map = {}
 local is_balancer = nil
+local default_group = "default"
+local function add_group(name)
+	if name and name ~= "" and not group_map[name] then
+		group_map[name] = true
+		group_list[#group_list + 1] = name
+	end
+end
 for k, e in ipairs(api.get_valid_nodes()) do
 	if e.node_type == "normal" then
 		nodes_list[#nodes_list + 1] = {
@@ -90,6 +99,11 @@ for k, e in ipairs(api.get_valid_nodes()) do
 			chain_proxy = e["chain_proxy"],
 			group = e["group"]
 		}
+		if not e.group or e.group == "" then
+			add_group(default_group)
+		else
+			add_group(e.group)
+		end
 	end
 	if e.protocol == "_balancing" then
 		balancing_list[#balancing_list + 1] = {
@@ -127,28 +141,31 @@ m.uci:foreach(appname, "socks", function(s)
 		}
 	end
 end)
+if #socks_list > 0 then
+	add_group("Socks")
+end
 
 if load_balancing_options then -- [[ 负载均衡 Start ]]
-	o = s:option(MultiValue, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
+	o = s:option(MultiValue, _n("balancing_group"), translate("Load balancing group list"), translate("Load balancing group list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
 	o:depends({ [_n("protocol")] = "_balancing" })
 	o.widget = "checkbox"
 	o.template = appname .. "/cbi/nodes_multivalue"
 	o.group = {}
-	for k, v in pairs(socks_list) do
-		o:value(v.id, v.remark)
-		o.group[#o.group+1] = v.group or ""
-	end
-	for i, v in pairs(nodes_list) do
-		o:value(v.id, v.remark)
-		o.group[#o.group+1] = v.group or ""
+	for _, group in ipairs(group_list) do
+		local label = group
+		if group == default_group then
+			label = translate("default")
+		end
+		o:value(group, label)
+		o.group[#o.group + 1] = group
 	end
 	-- 读取旧 DynamicList
 	function o.cfgvalue(self, section)
-		return m.uci:get_list(appname, section, "balancing_node") or {}
+		return m.uci:get_list(appname, section, "balancing_group") or {}
 	end
 	-- 写入保持 DynamicList
 	function o.custom_write(self, section, value)
-		local old = m.uci:get_list(appname, section, "balancing_node") or {}
+		local old = m.uci:get_list(appname, section, "balancing_group") or {}
 		local new, set = {}, {}
 		for v in value:gmatch("%S+") do
 			new[#new + 1] = v
@@ -156,13 +173,13 @@ if load_balancing_options then -- [[ 负载均衡 Start ]]
 		end
 		for _, v in ipairs(old) do
 			if not set[v] then
-				m.uci:set_list(appname, section, "balancing_node", new)
+				m.uci:set_list(appname, section, "balancing_group", new)
 				return
 			end
 			set[v] = nil
 		end
 		for _ in pairs(set) do
-			m.uci:set_list(appname, section, "balancing_node", new)
+			m.uci:set_list(appname, section, "balancing_group", new)
 			return
 		end
 	end

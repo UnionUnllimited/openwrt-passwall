@@ -574,7 +574,7 @@ function delete_select_nodes()
 				uci:delete(appname, t[".name"], "to_node")
 				uci:delete(appname, t[".name"], "chain_proxy")
 			end
-			local list_name = t["urltest_node"] and "urltest_node" or (t["balancing_node"] and "balancing_node")
+			local list_name = t["urltest_node"] and "urltest_node" or (t["balancing_group"] and "balancing_group") or (t["balancing_node"] and "balancing_node")
 			if list_name then
 				local nodes = uci:get_list(appname, t[".name"], list_name)
 				if nodes then
