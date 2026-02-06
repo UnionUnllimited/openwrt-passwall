@@ -696,7 +696,7 @@ function s2.remove(e, t)
 		end
 	end)
 	m.uci:foreach(appname, "nodes", function(s)
-		local list_name = s["urltest_node"] and "urltest_node" or (s["balancing_node"] and "balancing_node")
+		local list_name = s["urltest_node"] and "urltest_node" or (s["balancing_group"] and "balancing_group") or (s["balancing_node"] and "balancing_node")
 		if list_name then
 			local nodes = m.uci:get_list(appname, s[".name"], list_name)
 			if nodes then

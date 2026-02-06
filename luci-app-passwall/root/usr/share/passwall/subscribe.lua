@@ -289,12 +289,14 @@ do
 			local flag = "Xray负载均衡节点[" .. node_id .. "]列表"
 			local currentNodes = {}
 			local newNodes = {}
-			if node.balancing_node then
-				for k, node in pairs(node.balancing_node) do
+			local list_name = node.balancing_group and "balancing_group" or "balancing_node"
+			local list_value = node[list_name]
+			if list_value then
+				for k, node in pairs(list_value) do
 					currentNodes[#currentNodes + 1] = {
 						log = true,
 						node = node,
-						currentNode = node and uci:get_all(appname, node) or nil,
+						currentNode = list_name == "balancing_node" and node and uci:get_all(appname, node) or nil,
 						remarks = node,
 						set = function(o, server)
 							if o and server and server ~= "nil" then
@@ -311,7 +313,7 @@ do
 				set = function(o, newNodes)
 					if o then
 						if not newNodes then newNodes = o.newNodes end
-						uci:set_list(appname, node_id, "balancing_node", newNodes or {})
+						uci:set_list(appname, node_id, list_name, newNodes or {})
 					end
 				end
 			}

@@ -784,6 +784,54 @@ function gen_config(var)
 			return result
 		end
 
+		function normalize_list(value)
+			if type(value) == "table" then
+				return value
+			end
+			if type(value) == "string" and value ~= "" then
+				return { value }
+			end
+			return {}
+		end
+
+		function get_balancing_nodes(_node)
+			local nodes = {}
+			local groups = normalize_list(_node.balancing_group)
+			if #groups > 0 then
+				local group_set = {}
+				for i = 1, #groups do
+					group_set[groups[i]] = true
+				end
+				if group_set["Socks"] then
+					uci:foreach(appname, "socks", function(s)
+						if s.enabled == "1" and s.node then
+							nodes[#nodes + 1] = "Socks_" .. s[".name"]
+						end
+					end)
+				end
+				uci:foreach(appname, "nodes", function(s)
+					if s.type and s.remarks then
+						if s.protocol and s.protocol:sub(1, 1) == "_" then
+							return
+						end
+						local group = s.group
+						if not group or group == "" then
+							group = "default"
+						end
+						if group_set[group] then
+							nodes[#nodes + 1] = s[".name"]
+						end
+					end
+				end)
+			else
+				local blc_nodes = normalize_list(_node.balancing_node)
+				for i = 1, #blc_nodes do
+					nodes[#nodes + 1] = blc_nodes[i]
+				end
+			end
+			return nodes
+		end
+
 		function gen_loopback(outbound_tag, loopback_dst)
 			if not outbound_tag or outbound_tag == "" then return nil end
 			local inbound_tag = loopback_dst and "lo-to-" .. loopback_dst or outbound_tag .. "-lo"
@@ -808,7 +856,7 @@ function gen_config(var)
 				end
 			end
 			-- new balancer
-			local blc_nodes = _node.balancing_node
+			local blc_nodes = get_balancing_nodes(_node)
 			local valid_nodes = {}
 			for i = 1, #blc_nodes do
 				local blc_node_id = blc_nodes[i]
@@ -1158,7 +1206,7 @@ function gen_config(var)
 							preproxy_nodes[_node_id] = true
 							break
 						end
-						local _blc_nodes = _node.balancing_node
+						local _blc_nodes = get_balancing_nodes(_node)
 						for i = 1, #_blc_nodes do preproxy_nodes[_blc_nodes[i]] = true end
 						_node_id = _node.fallback_node
 					end
@@ -1301,7 +1349,7 @@ function gen_config(var)
 				rules = rules
 			}
 		elseif node.protocol == "_balancing" then
-			if node.balancing_node then
+			if node.balancing_group or node.balancing_node then
 				local balancer_tag = gen_balancer(node)
 				if balancer_tag then
 					table.insert(rules, { network = "tcp,udp", balancerTag = balancer_tag })
