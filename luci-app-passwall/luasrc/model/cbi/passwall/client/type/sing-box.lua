@@ -138,18 +138,34 @@ m.uci:foreach(appname, "socks", function(s)
 end)
 
 if load_urltest_options then -- [[ URLTest Start ]]
-	o = s:option(MultiValue, _n("urltest_node"), translate("URLTest node list"), translate("List of nodes to test, <a target='_blank' href='https://sing-box.sagernet.org/configuration/outbound/urltest'>document</a>"))
+	o = s:option(MultiValue, _n("urltest_node"), translate("URLTest node list"), translate("List of groups to test, <a target='_blank' href='https://sing-box.sagernet.org/configuration/outbound/urltest'>document</a>"))
 	o:depends({ [_n("protocol")] = "_urltest" })
 	o.widget = "checkbox"
 	o.template = appname .. "/cbi/nodes_multivalue"
 	o.group = {}
-	for k, v in pairs(socks_list) do
-		o:value(v.id, v.remark)
-		o.group[#o.group+1] = v.group or ""
+	local group_names = {}
+	local group_list = {}
+	local function add_group(name)
+		local group_name = name
+		if not group_name or group_name == "" then
+			group_name = "default"
+		end
+		if not group_names[group_name] then
+			group_names[group_name] = true
+			group_list[#group_list + 1] = group_name
+		end
 	end
-	for i, v in pairs(nodes_list) do
-		o:value(v.id, v.remark)
-		o.group[#o.group+1] = v.group or ""
+	for _, v in pairs(socks_list) do
+		add_group(v.group)
+	end
+	for _, v in pairs(nodes_list) do
+		add_group(v.group)
+	end
+	table.sort(group_list)
+	for _, group_name in ipairs(group_list) do
+		local label = group_name == "default" and translate("default") or group_name
+		o:value("group:" .. group_name, translate("Group") .. ": " .. label)
+		o.group[#o.group + 1] = translate("Group")
 	end
 	-- 读取旧 DynamicList
 	function o.cfgvalue(self, section)
@@ -182,8 +198,6 @@ if load_urltest_options then -- [[ URLTest Start ]]
 	o:value("https://www.gstatic.com/generate_204", "Gstatic")
 	o:value("https://www.google.com/generate_204", "Google")
 	o:value("https://www.youtube.com/generate_204", "YouTube")
-	o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
-	o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
 	o.default = o.keylist[3]
 	o.description = translate("The URL used to detect the connection status.")
 

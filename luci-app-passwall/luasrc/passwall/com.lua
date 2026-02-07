@@ -13,7 +13,6 @@ end
 -- 排序顺序定义
 _M.order = {
 	"geoview",
-	"chinadns-ng",
 	"xray",
 	"sing-box",
 	"hysteria"
@@ -64,31 +63,6 @@ _M.xray = {
 		mips   = "mips32",
 		mipsel = "mips32le",
 		mips64el = "mips64le"
-	}
-}
-
-_M["chinadns-ng"] = {
-	name = "ChinaDNS-NG",
-	repo = "zfl9/chinadns-ng",
-	get_url = gh_release_url,
-	cmd_version = "-V | awk '{print $2}'",
-	zipped = false,
-	default_path = "/usr/bin/chinadns-ng",
-	match_fmt_str = "%s",
-	file_tree = {
-		x86_64  = "wolfssl@x86_64.*x86_64@",
-		x86     = "wolfssl@i386.*i686",
-		mips    = "wolfssl@mips%-.*mips32%+soft_float@",
-		mips64  = "wolfssl@mips64%-.*mips64%+soft_float@",
-		mipsel  = "wolfssl@mipsel.*mips32%+soft_float@",
-		mips64el = "wolfssl@mips64el%-.*mips64%+soft_float@",
-		aarch64 = "wolfssl_noasm@aarch64.*v8a",
-		rockchip = "wolfssl@aarch64.*v8a",
-		armv5   = "wolfssl@arm.*v5te",
-		armv6   = "wolfssl@arm.*v6t2",
-		armv7   = "wolfssl@arm.*eabihf.*v7a",
-		armv8   = "wolfssl_noasm@aarch64.*v8a",
-		riscv64 = "wolfssl@riscv64.*"
 	}
 }
 

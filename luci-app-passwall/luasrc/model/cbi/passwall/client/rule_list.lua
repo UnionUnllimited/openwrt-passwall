@@ -6,8 +6,6 @@ local uci = api.uci
 local datatypes = api.datatypes
 local path = string.format("/usr/share/%s/rules/", appname)
 local gfwlist_path = "/usr/share/passwall/rules/gfwlist"
-local chnlist_path = "/usr/share/passwall/rules/chnlist"
-local chnroute_path = "/usr/share/passwall/rules/chnroute"
 
 m = Map(appname)
 api.set_apply_on_parse(m)
@@ -296,32 +294,6 @@ if fs.access(gfwlist_path) then
 			<label id="gfw_total_lines" style="margin-left: auto; margin-right: 10px;"></label>
 		</div>
 		<textarea id="gfw_textarea" class="cbi-input-textarea" style="width: 100%%; margin-top: 10px;" rows="40" wrap="off" readonly="readonly"></textarea>
-	]], translate("Read List"))
-end
-
-if fs.access(chnlist_path) then
-	s:tab("chn_list", translate("China List") .. "(" .. translate("Domain") .. ")")
-	o = s:taboption("chn_list", DummyValue, "_chn_fieldset")
-	o.rawhtml = true
-	o.default = string.format([[
-		<div style="display: flex; align-items: center;">
-			<input class="btn cbi-button cbi-button-add" type="button" onclick="read_chn()" value="%s" />
-			<label id="chn_total_lines" style="margin-left: auto; margin-right: 10px;"></label>
-		</div>
-		<textarea id="chn_textarea" class="cbi-input-textarea" style="width: 100%%; margin-top: 10px;" rows="40" wrap="off" readonly="readonly"></textarea>
-	]], translate("Read List"))
-end
-
-if fs.access(chnroute_path) then
-	s:tab("chnroute_list", translate("China List") .. "(IP)")
-	o = s:taboption("chnroute_list", DummyValue, "_chnroute_fieldset")
-	o.rawhtml = true
-	o.default = string.format([[
-		<div style="display: flex; align-items: center;">
-			<input class="btn cbi-button cbi-button-add" type="button" onclick="read_chnroute()" value="%s" />
-			<label id="chnroute_total_lines" style="margin-left: auto; margin-right: 10px;"></label>
-		</div>
-		<textarea id="chnroute_textarea" class="cbi-input-textarea" style="width: 100%%; margin-top: 10px;" rows="40" wrap="off" readonly="readonly"></textarea>
 	]], translate("Read List"))
 end
 

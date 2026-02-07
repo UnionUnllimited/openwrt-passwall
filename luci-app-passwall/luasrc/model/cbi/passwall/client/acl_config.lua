@@ -16,8 +16,6 @@ local sys = api.sys
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
 local has_gfwlist = fs.access("/usr/share/passwall/rules/gfwlist")
-local has_chnlist = fs.access("/usr/share/passwall/rules/chnlist")
-local has_chnroute = fs.access("/usr/share/passwall/rules/chnroute")
 
 local port_validate = function(self, value, t)
 	return value:gsub("-", ":")
@@ -322,15 +320,6 @@ if has_gfwlist then
 	o:depends({ _tcp_node_bool = "1" })
 end
 
-if has_chnlist or has_chnroute then
-	o = s:option(ListValue, "chn_list", translate("China List"))
-	o:value("0", translate("Close(Not use)"))
-	o:value("direct", translate("Direct Connection"))
-	o:value("proxy", translate("Proxy"))
-	o.default = "direct"
-	o:depends({ _tcp_node_bool = "1" })
-end
-
 o = s:option(ListValue, "tcp_proxy_mode", "TCP " .. translate("Proxy Mode"))
 o:value("disable", translate("No Proxy"))
 o:value("proxy", translate("Proxy"))
@@ -358,13 +347,9 @@ o:depends({ _node_sel_shunt = "1",  ['!reverse'] = true })
 
 ---- DNS
 o = s:option(ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
-o.default = "chinadns-ng"
+o.default = "dnsmasq"
 o:value("dnsmasq", "Dnsmasq")
-o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
 o:depends({ _tcp_node_bool = "1" })
-
-o = s:option(DummyValue, "view_chinadns_log", " ")
-o.template = appname .. "/acl/view_chinadns_log"
 
 o = s:option(Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
@@ -503,30 +488,16 @@ o.rmempty = false
 o:depends({dns_mode = "sing-box"})
 o:depends({dns_mode = "xray"})
 
-o = s:option(ListValue, "chinadns_ng_default_tag", translate("Default DNS"))
-o.default = "none"
-o:value("gfw", translate("Remote DNS"))
-o:value("chn", translate("Direct DNS"))
-o:value("none", translate("Smart, Do not accept no-ip reply from Direct DNS"))
-o:value("none_noip", translate("Smart, Accept no-ip reply from Direct DNS"))
-local desc = "<ul>"
-		.. "<li>" .. translate("When not matching any domain name list:") .. "</li>"
-		.. "<li>" .. translate("Remote DNS: Can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
-		.. "<li>" .. translate("Direct DNS: Internet experience may be better, but DNS will be leaked!") .. "</li>"
-o.description = desc
-		.. "<li>" .. translate("Smart: Forward to both direct and remote DNS, if the direct DNS resolution result is a mainland China IP, then use the direct result, otherwise use the remote result.") .. "</li>"
-		.. "<li>" .. translate("In smart mode, no-ip reply from Direct DNS:") .. "</li>"
-		.. "<li>" .. translate("Do not accept: Wait and use Remote DNS Reply.") .. "</li>"
-		.. "<li>" .. translate("Accept: Trust the Reply, using this option can improve DNS resolution speeds for some mainland IPv4-only sites.") .. "</li>"
-		.. "</ul>"
-o:depends({dns_shunt = "chinadns-ng", tcp_proxy_mode = "proxy", chn_list = "direct"})
-
 o = s:option(ListValue, "use_default_dns", translate("Default DNS"))
 o.default = "direct"
 o:value("remote", translate("Remote DNS"))
 o:value("direct", translate("Direct DNS"))
+local desc = "<ul>"
+		.. "<li>" .. translate("When not matching any domain name list:") .. "</li>"
+		.. "<li>" .. translate("Remote DNS: Can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
+		.. "<li>" .. translate("Direct DNS: Internet experience may be better, but DNS will be leaked!") .. "</li>"
 o.description = desc .. "</ul>"
-o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
+o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy"})
 
 local tcp = s.fields["tcp_node"]
 local udp = s.fields["udp_node"]

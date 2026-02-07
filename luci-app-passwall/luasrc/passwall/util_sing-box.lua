@@ -21,6 +21,28 @@ local GEO_VAR = {
 	TO_SRS_PATH = "/tmp/etc/" .. appname .."_tmp/singbox_srss/"
 }
 
+local function expand_group_nodes(group_name)
+	local normalized = group_name
+	if not normalized or normalized == "" then
+		normalized = "default"
+	end
+	local expanded = {}
+	for _, node in ipairs(api.get_valid_nodes()) do
+		local node_group = node.group or "default"
+		if node_group == normalized then
+			expanded[#expanded + 1] = node.id
+		end
+	end
+	if normalized == "Socks" then
+		uci:foreach(appname, "socks", function(s)
+			if s.enabled == "1" and s.node then
+				expanded[#expanded + 1] = "Socks_" .. s[".name"]
+			end
+		end)
+	end
+	return expanded
+end
+
 function check_geoview()
 	if not GEO_VAR.OK then
 		-- Only get once
@@ -1111,10 +1133,26 @@ function gen_config(var)
 				end
 			end
 			-- new urltest
-			local ut_nodes = _node.urltest_node
+			local ut_nodes = _node.urltest_node or {}
+			local expanded_nodes = {}
+			local seen = {}
+			for _, ut_node_id in ipairs(ut_nodes) do
+				if ut_node_id:sub(1, 6) == "group:" then
+					local group_name = ut_node_id:sub(7)
+					for _, grouped_id in ipairs(expand_group_nodes(group_name)) do
+						if not seen[grouped_id] then
+							seen[grouped_id] = true
+							expanded_nodes[#expanded_nodes + 1] = grouped_id
+						end
+					end
+				elseif not seen[ut_node_id] then
+					seen[ut_node_id] = true
+					expanded_nodes[#expanded_nodes + 1] = ut_node_id
+				end
+			end
 			local valid_nodes = {}
-			for i = 1, #ut_nodes do
-				local ut_node_id = ut_nodes[i]
+			for i = 1, #expanded_nodes do
+				local ut_node_id = expanded_nodes[i]
 				local ut_node_tag = "ut-" .. ut_node_id
 				local is_new_ut_node = true
 				for _, outbound in ipairs(outbounds) do
