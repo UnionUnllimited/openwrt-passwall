@@ -13,9 +13,6 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 	}
 
 	div.cbi-value[id$="-gfwlist_update"],
-	div.cbi-value[id$="-chnroute_update"],
-	div.cbi-value[id$="-chnroute6_update"],
-	div.cbi-value[id$="-chnlist_update"],
 	div.cbi-value[id$="-geoip_update"],
 	div.cbi-value[id$="-geosite_update"] {
 		display: none !important;
@@ -57,18 +54,6 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 				gfwlist
 			</label>
 			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="chnroute" value="1" />
-				chnroute
-			</label>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="chnroute6" value="1" />
-				chnroute6
-			</label>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="chnlist" value="1" />
-				chnlist
-			</label>
-			<label>
 				<input class="cbi-input-checkbox" type="checkbox" name="geoip" value="1" />
 				geoip
 			</label>
@@ -92,8 +77,7 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 	//<![CDATA[
 	document.addEventListener('DOMContentLoaded', function () {
 		const flags = [
-			"gfwlist_update","chnroute_update","chnroute6_update",
-			"chnlist_update","geoip_update","geosite_update"
+			"gfwlist_update","geoip_update","geosite_update"
 		];
 		const bindFlags = () => {
 			let allBound = true;
@@ -168,10 +152,7 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 		while(len--) {
 			var dom = domList[len];　　
 			if(dom.type == 'checkbox' && dom.checked) {
-				if(type == 'geoip' && (dom.name === 'chnroute' || dom.name === 'chnroute6')) {
-					checkBoxList.push(dom.name);
-				}
-				if(type == 'geosite' && (dom.name === 'gfwlist' || dom.name === 'chnlist')) {
+				if(type == 'geosite' && dom.name === 'gfwlist') {
 					checkBoxList.push(dom.name);
 				}
 			}

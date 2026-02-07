@@ -70,7 +70,6 @@ function index()
 	entry({"admin", "services", appname, "get_now_use_node"}, call("get_now_use_node")).leaf = true
 	entry({"admin", "services", appname, "get_redir_log"}, call("get_redir_log")).leaf = true
 	entry({"admin", "services", appname, "get_socks_log"}, call("get_socks_log")).leaf = true
-	entry({"admin", "services", appname, "get_chinadns_log"}, call("get_chinadns_log")).leaf = true
 	entry({"admin", "services", appname, "get_log"}, call("get_log")).leaf = true
 	entry({"admin", "services", appname, "clear_log"}, call("clear_log")).leaf = true
 	entry({"admin", "services", appname, "index_status"}, call("index_status")).leaf = true
@@ -274,18 +273,6 @@ function get_socks_log()
 	end
 end
 
-function get_chinadns_log()
-	local flag = http.formvalue("flag")
-	local path = "/tmp/etc/passwall/acl/" .. flag .. "/chinadns_ng.log"
-	if fs.access(path) then
-		local content = luci.sys.exec("tail -n 5000 ".. path)
-		content = content:gsub("\n", "<br />")
-		http.write(content)
-	else
-		http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
-	end
-end
-
 function get_log()
 	-- luci.sys.exec("[ -f /tmp/log/passwall.log ] && sed '1!G;h;$!d' /tmp/log/passwall.log > /tmp/log/passwall_show.log")
 	http.write(luci.sys.exec("[ -f '/tmp/log/passwall.log' ] && cat /tmp/log/passwall.log"))
@@ -300,8 +287,6 @@ function index_status()
 	local dns_shunt = uci:get(appname, "@global[0]", "dns_shunt") or "dnsmasq"
 	if dns_shunt == "smartdns" then
 		e.dns_mode_status = luci.sys.call("pidof smartdns >/dev/null") == 0
-	elseif dns_shunt == "chinadns-ng" then
-		e.dns_mode_status = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '/tmp/etc/passwall/bin/' | grep 'default' | grep 'chinadns_ng' >/dev/null") == 0
 	else
 		e.dns_mode_status = luci.sys.call("netstat -apn | grep ':15353 ' >/dev/null") == 0
 	end
@@ -776,10 +761,6 @@ function read_rulelist()
 	local rule_path
 	if rule_type == "gfw" then
 		rule_path = "/usr/share/passwall/rules/gfwlist"
-	elseif rule_type == "chn" then
-		rule_path = "/usr/share/passwall/rules/chnlist"
-	elseif rule_type == "chnroute" then
-		rule_path = "/usr/share/passwall/rules/chnroute"
 	else
 		http.status(400, "Invalid rule type")
 		return

@@ -15,18 +15,12 @@ local nftable_name = "inet passwall"
 local rule_path = "/usr/share/" .. name .. "/rules"
 local reboot = 0
 local gfwlist_update = "0"
-local chnroute_update = "0"
-local chnroute6_update = "0"
-local chnlist_update = "0"
 local geoip_update = "0"
 local geosite_update = "0"
 
 local excluded_domain = {"apple.com","sina.cn","sina.com.cn","baidu.com","byr.cn","jlike.com","weibo.com","zhongsou.com","youdao.com","sogou.com","so.com","soso.com","aliyun.com","taobao.com","jd.com","qq.com","bing.com"}
 
 local gfwlist_url = uci:get(name, "@global_rules[0]", "gfwlist_url") or {"https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/gfw.txt"}
-local chnroute_url = uci:get(name, "@global_rules[0]", "chnroute_url") or {"https://ispip.clang.cn/all_cn.txt"}
-local chnroute6_url = uci:get(name, "@global_rules[0]", "chnroute6_url") or {"https://ispip.clang.cn/all_cn_ipv6.txt"}
-local chnlist_url = uci:get(name, "@global_rules[0]", "chnlist_url") or {"https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}
 local geoip_url = uci:get(name, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
 local geosite_url = uci:get(name, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 local asset_location = uci:get(name, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
@@ -501,9 +495,6 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 			if api.is_finded("fw4") and (rule_type == "ip4" or rule_type == "ip6") then
 				local nft_file = file_tmp .. ".nft"
 				local set_name = "passwall_" .. rule_name
-				if rule_name == "chnroute" then set_name = "passwall_chn"
-				elseif rule_name == "chnroute6" then set_name = "passwall_chn6" end
-                
 				local addr_type = (rule_type == "ip4") and "ipv4_addr" or "ipv6_addr"
 				gen_cache(set_name, addr_type, file_tmp, nft_file)
 				os.execute(string.format("mv -f %s %s.nft", nft_file, rule_final_path))
@@ -609,18 +600,6 @@ local function fetch_gfwlist()
 	fetch_rule("gfwlist","domain",gfwlist_url,true)
 end
 
-local function fetch_chnroute()
-	fetch_rule("chnroute","ip4",chnroute_url,false)
-end
-
-local function fetch_chnroute6()
-	fetch_rule("chnroute6","ip6",chnroute6_url,false)
-end
-
-local function fetch_chnlist()
-	fetch_rule("chnlist","domain",chnlist_url,false)
-end
-
 local function fetch_geoip()
 	fetch_geofile("geoip.dat","geoip",geoip_url)
 end
@@ -634,15 +613,6 @@ if arg2 then
 		if w == "gfwlist" then
 			gfwlist_update = "1"
 		end
-		if w == "chnroute" then
-			chnroute_update = "1"
-		end
-		if w == "chnroute6" then
-			chnroute6_update = "1"
-		end
-		if w == "chnlist" then
-			chnlist_update = "1"
-		end
 		if w == "geoip" then
 			geoip_update = "1"
 		end
@@ -653,13 +623,10 @@ if arg2 then
 	if rollback then arg2 = nil end
 else
 	gfwlist_update = uci:get(name, "@global_rules[0]", "gfwlist_update") or "1"
-	chnroute_update = uci:get(name, "@global_rules[0]", "chnroute_update") or "1"
-	chnroute6_update = uci:get(name, "@global_rules[0]", "chnroute6_update") or "1"
-	chnlist_update = uci:get(name, "@global_rules[0]", "chnlist_update") or "1"
 	geoip_update = uci:get(name, "@global_rules[0]", "geoip_update") or "1"
 	geosite_update = uci:get(name, "@global_rules[0]", "geosite_update") or "1"
 end
-if gfwlist_update == "0" and chnroute_update == "0" and chnroute6_update == "0" and chnlist_update == "0" and geoip_update == "0" and geosite_update == "0" then
+if gfwlist_update == "0" and geoip_update == "0" and geosite_update == "0" then
 	os.exit(0)
 end
 
@@ -694,12 +661,6 @@ if geo2rule == "1" then
 	local force_generate = (arg2 ~= nil)
 
 	if (geoip_update_ok or force_generate) and fs.access(asset_location .. "geoip.dat") then
-			if force_generate or chnroute_update == "1" then
-				safe_call(fetch_chnroute, "生成chnroute发生错误...")
-			end
-			if force_generate or chnroute6_update == "1" then
-				safe_call(fetch_chnroute6, "生成chnroute6发生错误...")
-			end
 	else
 		log("geoip.dat 文件不存在,跳过规则生成。")
 	end
@@ -708,27 +669,12 @@ if geo2rule == "1" then
 			if force_generate or gfwlist_update == "1" then
 				safe_call(fetch_gfwlist, "生成gfwlist发生错误...")
 			end
-			if force_generate or chnlist_update == "1" then
-				safe_call(fetch_chnlist, "生成chnlist发生错误...")
-			end
 	else
 		log("geosite.dat 文件不存在,跳过规则生成。")
 	end
 else
 	if gfwlist_update == "1" then
 		safe_call(fetch_gfwlist, "更新gfwlist发生错误...")
-	end
-
-	if chnroute_update == "1" then
-		safe_call(fetch_chnroute, "更新chnroute发生错误...")
-	end
-
-	if chnroute6_update == "1" then
-		safe_call(fetch_chnroute6, "更新chnroute6发生错误...")
-	end
-
-	if chnlist_update == "1" then
-		safe_call(fetch_chnlist, "更新chnlist发生错误...")
 	end
 
 	if geoip_update == "1" then
@@ -746,9 +692,6 @@ end
 
 if not rollback then
 	uci:set(name, "@global_rules[0]", "gfwlist_update", gfwlist_update)
-	uci:set(name, "@global_rules[0]", "chnroute_update", chnroute_update)
-	uci:set(name, "@global_rules[0]", "chnroute6_update", chnroute6_update)
-	uci:set(name, "@global_rules[0]", "chnlist_update", chnlist_update)
 	uci:set(name, "@global_rules[0]", "geoip_update", geoip_update)
 	uci:set(name, "@global_rules[0]", "geosite_update", geosite_update)
 	api.uci_save(uci, name, true)

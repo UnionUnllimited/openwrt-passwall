@@ -23,21 +23,29 @@ test_url() {
 
 test_proxy() {
 	result=0
-	status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout})
-	if [ "$status" = "200" ]; then
-		result=0
-	else
-		status2=$(test_url "https://www.baidu.com" ${retry_num} ${connect_timeout})
-		if [ "$status2" = "200" ]; then
-			result=1
-		else
-			result=2
-			ping -c 3 -W 1 223.5.5.5 > /dev/null 2>&1
-			[ $? -eq 0 ] && {
-				result=1
-			}
+	local proxy_urls="https://www.google.com/generate_204 https://www.gstatic.com/generate_204 https://cp.cloudflare.com/ https://www.cloudflare.com/cdn-cgi/trace https://www.wikipedia.org/"
+	local direct_urls="https://www.example.com/ https://www.apple.com/library/test/success.html https://www.cloudflare.com/ https://www.microsoft.com/"
+	for url in ${proxy_urls}; do
+		status=$(test_url "${url}" ${retry_num} ${connect_timeout})
+		if [ "$status" = "200" ]; then
+			result=0
+			echo $result
+			return
 		fi
-	fi
+	done
+	for url in ${direct_urls}; do
+		status=$(test_url "${url}" ${retry_num} ${connect_timeout})
+		if [ "$status" = "200" ]; then
+			result=1
+			echo $result
+			return
+		fi
+	done
+	result=2
+	ping -c 3 -W 1 223.5.5.5 > /dev/null 2>&1
+	[ $? -eq 0 ] && {
+		result=1
+	}
 	echo $result
 }
 

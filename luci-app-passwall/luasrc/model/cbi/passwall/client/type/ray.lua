@@ -51,9 +51,6 @@ o:value("wireguard", translate("WireGuard"))
 if api.compare_versions(xray_version, ">=", "26.1.13") then
 	o:value("hysteria2", translate("Hysteria2"))
 end
-if api.compare_versions(xray_version, ">=", "1.8.12") then
-	o:value("_balancing", translate("Balancing"))
-end
 o:value("_shunt", translate("Shunt"))
 o:value("_iface", translate("Custom Interface"))
 function o.custom_cfgvalue(self, section)
@@ -64,7 +61,7 @@ function o.custom_cfgvalue(self, section)
 	end
 end
 
-local load_balancing_options = s.val["protocol"] == "_balancing" or arg_select_proto == "_balancing"
+local load_balancing_options = false
 local load_shunt_options = s.val["protocol"] == "_shunt" or arg_select_proto == "_shunt"
 local load_iface_options = s.val["protocol"] == "_iface" or arg_select_proto == "_iface"
 local load_normal_options = true
@@ -128,115 +125,7 @@ m.uci:foreach(appname, "socks", function(s)
 	end
 end)
 
-if load_balancing_options then -- [[ 负载均衡 Start ]]
-	o = s:option(MultiValue, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
-	o:depends({ [_n("protocol")] = "_balancing" })
-	o.widget = "checkbox"
-	o.template = appname .. "/cbi/nodes_multivalue"
-	o.group = {}
-	for k, v in pairs(socks_list) do
-		o:value(v.id, v.remark)
-		o.group[#o.group+1] = v.group or ""
-	end
-	for i, v in pairs(nodes_list) do
-		o:value(v.id, v.remark)
-		o.group[#o.group+1] = v.group or ""
-	end
-	-- 读取旧 DynamicList
-	function o.cfgvalue(self, section)
-		return m.uci:get_list(appname, section, "balancing_node") or {}
-	end
-	-- 写入保持 DynamicList
-	function o.custom_write(self, section, value)
-		local old = m.uci:get_list(appname, section, "balancing_node") or {}
-		local new, set = {}, {}
-		for v in value:gmatch("%S+") do
-			new[#new + 1] = v
-			set[v] = 1
-		end
-		for _, v in ipairs(old) do
-			if not set[v] then
-				m.uci:set_list(appname, section, "balancing_node", new)
-				return
-			end
-			set[v] = nil
-		end
-		for _ in pairs(set) do
-			m.uci:set_list(appname, section, "balancing_node", new)
-			return
-		end
-	end
 
-	o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
-	o:depends({ [_n("protocol")] = "_balancing" })
-	o:value("random")
-	o:value("roundRobin")
-	o:value("leastPing")
-	o:value("leastLoad")
-	o.default = "random"
-
-	-- Fallback Node
-	o = s:option(ListValue, _n("fallback_node"), translate("Fallback Node"))
-	o:value("", translate("Close(Not use)"))
-	o:depends({ [_n("protocol")] = "_balancing" })
-	o.template = appname .. "/cbi/nodes_listvalue"
-	o.group = {""}
-	local function check_fallback_chain(fb)
-		for k, v in pairs(fallback_list) do
-			if v.fallback == fb then
-				fallback_list[k] = nil
-				check_fallback_chain(v.id)
-			end
-		end
-	end
-	-- 检查fallback链，去掉会形成闭环的balancer节点
-	if is_balancer then
-		check_fallback_chain(arg[1])
-	end
-	for k, v in pairs(socks_list) do
-		o:value(v.id, v.remark)
-		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-	end
-	for k, v in pairs(fallback_list) do
-		o:value(v.id, v.remark)
-		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-	end
-	for k, v in pairs(nodes_list) do
-		o:value(v.id, v.remark)
-		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-	end
-
-	-- 探测地址
-	o = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custom Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
-	o:depends({ [_n("protocol")] = "_balancing" })
-
-	o = s:option(Value, _n("probeUrl"), translate("Probe URL"))
-	o:depends({ [_n("useCustomProbeUrl")] = true })
-	o:value("https://cp.cloudflare.com/", "Cloudflare")
-	o:value("https://www.gstatic.com/generate_204", "Gstatic")
-	o:value("https://www.google.com/generate_204", "Google")
-	o:value("https://www.youtube.com/generate_204", "YouTube")
-	o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
-	o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
-	o.default = o.keylist[3]
-	o.description = translate("The URL used to detect the connection status.")
-
-	-- 探测间隔
-	o = s:option(Value, _n("probeInterval"), translate("Probe Interval"))
-	o:depends({ [_n("protocol")] = "_balancing" })
-	o.default = "1m"
-	o.placeholder = "1m"
-	o.description = translate("The interval between initiating probes.") .. "<br>" ..
-			translate("The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>s</code>, <code>m</code>, <code>h</code>, which correspond to seconds, minutes, and hours, respectively.") .. "<br>" ..
-			translate("When the unit is not filled in, it defaults to seconds.")
-
-	o = s:option(Value, _n("expected"), translate("Preferred Node Count"))
-	o:depends({ [_n("balancingStrategy")] = "leastLoad" })
-	o.datatype = "uinteger"
-	o.default = "2"
-	o.placeholder = "2"
-	o.description = translate("The load balancer selects the optimal number of nodes, and traffic is randomly distributed among them.")
-end  -- [[ 负载均衡 End ]]
 
 if load_iface_options then -- [[ 自定义接口 Start ]]
 	o = s:option(Value, _n("iface"), translate("Interface"))
