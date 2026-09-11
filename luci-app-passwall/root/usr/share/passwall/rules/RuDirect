@@ -1,0 +1,50 @@
+# Домены в обход прокси. Маршрутизация — по режиму RuDirect
+# в «Базовых настройках» (по умолчанию «Директ»).
+#
+# Готового публичного списка для этой задачи нет: все известные списки
+# отвечают на обратный вопрос — что проксировать. Ниже стартовый набор
+# сервисов, которые обычно ломаются при заходе с зарубежного IP:
+# просят подтверждение, блокируют вход или просто не открываются.
+# Правьте под себя — совпадение идёт по суффиксу, поддомены включаются.
+
+# Госуслуги и госведомства
+gosuslugi.ru
+nalog.ru
+nalog.gov.ru
+pfr.gov.ru
+mos.ru
+
+# Банки и платежи
+sberbank.ru
+sber.ru
+tbank.ru
+tinkoff.ru
+vtb.ru
+alfabank.ru
+gazprombank.ru
+raiffeisen.ru
+psbank.ru
+mironline.ru
+
+# Маркетплейсы и магазины
+ozon.ru
+wildberries.ru
+avito.ru
+dns-shop.ru
+mvideo.ru
+citilink.ru
+
+# Транспорт и доставка
+rzd.ru
+pochta.ru
+cdek.ru
+aeroflot.ru
+
+# Прочее локальное
+yandex.ru
+ya.ru
+mail.ru
+vk.com
+hh.ru
+2gis.ru
+drom.ru

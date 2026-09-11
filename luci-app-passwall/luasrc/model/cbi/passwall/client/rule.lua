@@ -16,6 +16,8 @@ o.rmempty = false
 ---- RuProxy URL (домены)
 o = s:option(DynamicList, "ru_proxy_url", translatef("%s Update URL", "RuProxy"))
 o:value("https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/domains_all.lst", translate("Re-filter-lists/domains_all"))
+o:value("https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-raw.lst", translate("itdoginfo/allow-domains (blocked in RU)"))
+o:value("https://raw.githubusercontent.com/dartraiden/no-russia-hosts/master/hosts.txt", translate("dartraiden/no-russia-hosts (block RU IPs)"))
 o:value("https://antifilter.download/list/domains.lst", translate("antifilter.download/domains (large)"))
 o.default = o.keylist[1]
 
@@ -27,7 +29,11 @@ o:value("https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/ipsum
 o.default = o.keylist[1]
 
 ---- RuDirect URL (домены)
+-- Готового публичного списка «домены в обход» нет: все известные списки
+-- отвечают на обратный вопрос — что проксировать. Заполняется вручную,
+-- стартовый набор лежит в самом файле RuDirect.
 o = s:option(DynamicList, "ru_direct_url", translatef("%s Update URL", "RuDirect"))
+o.description = translate("No public source exists for this list — public lists answer the opposite question (what to proxy). Fill it by hand on the Rule List page, or point it at your own URL.")
 
 ---- RuDirectIp URL
 o = s:option(DynamicList, "ru_direct_ip_url", translatef("%s Update URL", "RuDirectIp"))
