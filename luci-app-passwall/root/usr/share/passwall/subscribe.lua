@@ -521,6 +521,17 @@ local function set_ss_implementation(ss_type, result)
 	return result
 end
 
+-- 分享链接里的 tfo 可能是 1/true/yes 等写法，
+-- 而节点配置与核心配置生成处只认字符串 "1"，需要先归一化。
+local function parse_tfo(value)
+	if value == nil then return nil end
+	value = tostring(value):lower()
+	if value == "1" or value == "true" or value == "yes" then
+		return "1"
+	end
+	return nil
+end
+
 -- 处理数据
 local function processData(szType, content, add_mode, group, sub_cfg)
 	--log(2, content, add_mode, group)
@@ -718,7 +729,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.ech_config = info.ech
 		end
 
-		result.tcp_fast_open = info.tfo
+		result.tcp_fast_open = parse_tfo(info.tfo)
 
 		info.fm = (info.fm and info.fm ~= "") and UrlDecode(info.fm) or nil
 		result.use_finalmask = (info.fm and info.fm ~= "") and "1" or nil
@@ -830,7 +841,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.method = method
 			result.ss_method = method
 			result.password = password
-			result.tcp_fast_open = params.tfo
+			result.tcp_fast_open = parse_tfo(params.tfo)
 			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
 			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 
@@ -1180,7 +1191,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 				result.httpupgrade_path = params.path
 			end
 
-			result.tcp_fast_open = params.tfo
+			result.tcp_fast_open = parse_tfo(params.tfo)
 			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
 			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 
@@ -1366,7 +1377,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			end
 
 			result.port = port
-			result.tcp_fast_open = params.tfo
+			result.tcp_fast_open = parse_tfo(params.tfo)
 			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
 			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 
