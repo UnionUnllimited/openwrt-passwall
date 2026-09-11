@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=26.9.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_PO_VERSION:=$(PKG_VERSION)
 
 PKG_CONFIG_DEPENDS:= \
@@ -32,10 +32,13 @@ PKG_CONFIG_DEPENDS:= \
 
 LUCI_TITLE:=LuCI support for PassWall
 LUCI_PKGARCH:=all
+# chinadns-ng, dns2socks и tcping живут в отдельном фиде passwall_packages
+# и в штатных репозиториях OpenWrt отсутствуют. Из зависимостей убраны,
+# чтобы пакет ставился без подключения стороннего фида.
 LUCI_DEPENDS:=+coreutils +coreutils-base64 +coreutils-nohup +coreutils-timeout +curl \
-	+chinadns-ng +dns2socks +dnsmasq-full +ip-full \
+	+dnsmasq-full +ip-full \
 	+libuci-lua +lua +luci-compat +luci-lib-jsonc \
-	+microsocks +resolveip +tcping +lyaml
+	+microsocks +resolveip +lyaml
 
 define Package/$(PKG_NAME)/config
 menu "Configuration"

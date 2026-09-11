@@ -4,7 +4,7 @@ config global
 	option socks_enabled '0'
 	option node_socks_port '1070'
 	option filter_proxy_ipv6 '1'
-	option dns_shunt 'chinadns-ng'
+	option dns_shunt 'dnsmasq'
 	option dns_mode 'tcp'
 	option remote_dns '1.1.1.1'
 	list smartdns_remote_dns 'https://1.1.1.1/dns-query'
@@ -52,7 +52,7 @@ config global_xray
 config global_singbox
 
 config global_other
-	option auto_detection_time 'tcping'
+	option auto_detection_time 'icmp'
 	option show_node_info '0'
 
 config global_rules
