@@ -1112,7 +1112,7 @@ function gen_config(var)
 	local no_run = var["no_run"]
 	local use_proxy_list = var["use_proxy_list"]
 	local use_gfw_list = var["use_gfw_list"]
-	local chn_list = var["chn_list"]
+	local ru_proxy_mode = var["ru_proxy_mode"]
 
 	local dns_domain_rules = {}
 	local dns = nil
@@ -1544,7 +1544,7 @@ function gen_config(var)
 			local function foreach_shunt_rule(callback)
 				api.uci_foreach_c("shunt_rules", callback)
 
-				if use_gfw_list ~= "1" or chn_list ~= "0" then return end
+				if use_gfw_list ~= "1" or ru_proxy_mode ~= "0" then return end
 
 				-- GFW 模式下使用分流节点时添加特定规则
 				local function read_proxy_list(path)
@@ -1790,7 +1790,7 @@ function gen_config(var)
 				end
 			end)
 
-			if use_gfw_list == "1" and chn_list == "0" then  -- GFW 模式下使用分流节点时添加兜底规则
+			if use_gfw_list == "1" and ru_proxy_mode == "0" then  -- GFW 模式下使用分流节点时添加兜底规则
 				table.insert(rules, {
 					action = "route",
 					port_range = { "0:65535" },

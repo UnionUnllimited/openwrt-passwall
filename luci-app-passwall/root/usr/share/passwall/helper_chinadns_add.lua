@@ -9,7 +9,7 @@ local USE_DIRECT_LIST = var["-USE_DIRECT_LIST"]
 local USE_PROXY_LIST = var["-USE_PROXY_LIST"]
 local USE_BLOCK_LIST = var["-USE_BLOCK_LIST"]
 local GFWLIST = var["-GFWLIST"]
-local CHNLIST = var["-CHNLIST"]
+local RU_PROXY_MODE = var["-RU_PROXY_MODE"]
 local NO_IPV6_TRUST = var["-NO_IPV6_TRUST"]
 local DEFAULT_MODE = var["-DEFAULT_MODE"]
 local DEFAULT_TAG = var["-DEFAULT_TAG"]
@@ -109,7 +109,7 @@ end
 
 local setflag = (NFTFLAG == "1") and "inet@passwall@" or ""
 
-local only_global = (DEFAULT_MODE == "proxy" and CHNLIST == "0" and GFWLIST == "0") and 1
+local only_global = (DEFAULT_MODE == "proxy" and RU_PROXY_MODE == "0" and GFWLIST == "0") and 1
 
 config_lines = {
 	LOG_FILE ~= "/dev/null" and "verbose" or "",
@@ -342,38 +342,38 @@ if GFWLIST == "1" and is_file_nonzero(RULES_PATH .. "/gfwlist") then
 end
 
 --中国列表
-if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
-	if CHNLIST == "direct" then
+if RU_PROXY_MODE ~= "0" and is_file_nonzero(RULES_PATH .. "/RuProxy") then
+	if RU_PROXY_MODE == "direct" then
 		local sets = {
 			setflag .. "psw_chn",
 			setflag .. "psw_chn6"
 		}
 		local suffix = (NFTFLAG == "1") and "_static" or ""
 		tmp_lines = {
-			"chnlist-file " .. RULES_PATH .. "/chnlist",
+			"chnlist-file " .. RULES_PATH .. "/RuProxy",
 			"ipset-name4 " .. setflag .. "psw_chn" .. suffix,
 			"ipset-name6 " .. setflag .. "psw_chn6" .. suffix,
 			"add-tagchn-ip" .. ((NFTFLAG == "1") and (" " .. table.concat(sets, ",")) or "")
 		}
 		merge_array(config_lines, tmp_lines)
-		log(string.format("  - 中国域名表(chnroute)：%s", DNS_LOCAL or "默认"))
+		log(string.format("  - RuProxy：%s", DNS_LOCAL or "默认"))
 	end
 
 	--回中国模式
-	if CHNLIST == "proxy" then
+	if RU_PROXY_MODE == "proxy" then
 		local sets = {
 			setflag .. "psw_chn",
 			setflag .. "psw_chn6"
 		}
 		tmp_lines = {
 			"group chn_proxy",
-			"group-dnl " .. RULES_PATH .. "/chnlist",
+			"group-dnl " .. RULES_PATH .. "/RuProxy",
 			"group-upstream " .. DNS_TRUST,
 			"group-ipset " .. table.concat(sets, ",")
 		}
 		if NO_IPV6_TRUST == "1" then table.insert(tmp_lines, "no-ipv6 tag:chn_proxy") end
 		insert_array_after(config_lines, tmp_lines, "#--1")
-		log(string.format("  - 中国域名表(chnroute)：%s", DNS_TRUST or "默认"))
+		log(string.format("  - RuProxy：%s", DNS_TRUST or "默认"))
 	end
 end
 
@@ -446,7 +446,7 @@ if IS_SHUNT_NODE then
 		end
 	end
 
-	if GFWLIST == "1" and CHNLIST == "0" and USE_GEOVIEW == "1" then  --仅GFW模式解析geosite
+	if GFWLIST == "1" and RU_PROXY_MODE == "0" and USE_GEOVIEW == "1" then  --仅GFW模式解析geosite
 		local return_white, return_shunt
 		if geosite_white_arg ~= "" then
 			return_white = get_geosite(geosite_white_arg, file_white_host)
@@ -508,10 +508,10 @@ if IS_SHUNT_NODE then
 end
 
 --只使用gfwlist模式，GFW列表以外的域名及默认使用本地DNS
-if GFWLIST == "1" and CHNLIST == "0" then DEFAULT_TAG = "chn" end
+if GFWLIST == "1" and RU_PROXY_MODE == "0" then DEFAULT_TAG = "chn" end
 
 --回中国模式，中国列表以外的域名及默认使用本地DNS
-if CHNLIST == "proxy" then DEFAULT_TAG = "chn" end
+if RU_PROXY_MODE == "proxy" then DEFAULT_TAG = "chn" end
 
 --全局模式，默认使用远程DNS
 if only_global then

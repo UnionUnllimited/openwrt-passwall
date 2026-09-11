@@ -215,7 +215,7 @@ load_acl() {
 			use_proxy_list=${use_proxy_list:-1}
 			use_block_list=${use_block_list:-1}
 			use_gfw_list=${use_gfw_list:-1}
-			chn_list=${chn_list:-direct}
+			ru_proxy_mode=${ru_proxy_mode:-direct}
 			tcp_proxy_mode=${tcp_proxy_mode:-proxy}
 			udp_proxy_mode=${udp_proxy_mode:-proxy}
 			[ "$mode" = "0" ] && {
@@ -257,7 +257,7 @@ load_acl() {
 				use_proxy_list=${USE_PROXY_LIST}
 				use_block_list=${USE_BLOCK_LIST}
 				use_gfw_list=${USE_GFW_LIST}
-				chn_list=${CHN_LIST}
+				ru_proxy_mode=${RU_PROXY_MODE}
 				tcp_proxy_mode=${TCP_PROXY_MODE}
 				udp_proxy_mode=${UDP_PROXY_MODE}
 				use_shunt_node=${USE_SHUNT_NODE}
@@ -427,14 +427,14 @@ load_acl() {
 							[ "${use_fakedns}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "-d $FAKE_IP_6 -j MARK --set-mark 88" 2>/dev/null
 							[ "${use_proxy_list}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $black6_set_name) -j MARK --set-mark 88" 2>/dev/null
 							[ "${use_gfw_list}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $gfw6_set_name) -j MARK --set-mark 88" 2>/dev/null
-							[ "${chn_list}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $IPSET_CHN6) $(get_jump_ipt ${chn_list} "-j MARK --set-mark 88")" 2>/dev/null
+							[ "${ru_proxy_mode}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $IPSET_CHN6) $(get_jump_ipt ${ru_proxy_mode} "-j MARK --set-mark 88")" 2>/dev/null
 							[ "${use_shunt_node}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $shunt6_set_name) -j MARK --set-mark 88" 2>/dev/null
 							[ "${tcp_proxy_mode}" != "disable" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "-j MARK --set-mark 88" 2>/dev/null
 						}
 						[ "${use_fakedns}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "-d $FAKE_IP -j MARK --set-mark 88"
 						[ "${use_proxy_list}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $black_set_name) -j MARK --set-mark 88"
 						[ "${use_gfw_list}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $gfw_set_name) -j MARK --set-mark 88"
-						[ "${chn_list}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $IPSET_CHN) $(get_jump_ipt ${chn_list} "-j MARK --set-mark 88")"
+						[ "${ru_proxy_mode}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $IPSET_CHN) $(get_jump_ipt ${ru_proxy_mode} "-j MARK --set-mark 88")"
 						[ "${use_shunt_node}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "$(dst $shunt_set_name) -j MARK --set-mark 88"
 						[ "${tcp_proxy_mode}" != "disable" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_proxy_drop_ports "-j MARK --set-mark 88"
 						echolog "     - ${msg}屏蔽代理 TCP 端口[${tcp_proxy_drop_ports}]"
@@ -445,14 +445,14 @@ load_acl() {
 							[ "${use_fakedns}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "-d $FAKE_IP_6 -j MARK --set-mark 88" 2>/dev/null
 							[ "${use_proxy_list}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $black6_set_name) -j MARK --set-mark 88" 2>/dev/null
 							[ "${use_gfw_list}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $gfw6_set_name) -j MARK --set-mark 88" 2>/dev/null
-							[ "${chn_list}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $IPSET_CHN6) $(get_jump_ipt ${chn_list} "-j MARK --set-mark 88")" 2>/dev/null
+							[ "${ru_proxy_mode}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $IPSET_CHN6) $(get_jump_ipt ${ru_proxy_mode} "-j MARK --set-mark 88")" 2>/dev/null
 							[ "${use_shunt_node}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $shunt6_set_name) -j MARK --set-mark 88" 2>/dev/null
 							[ "${udp_proxy_mode}" != "disable" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "-j MARK --set-mark 88" 2>/dev/null
 						}
 						[ "${use_fakedns}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "-d $FAKE_IP -j MARK --set-mark 88"
 						[ "${use_proxy_list}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $black_set_name) -j MARK --set-mark 88"
 						[ "${use_gfw_list}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $gfw_set_name) -j MARK --set-mark 88"
-						[ "${chn_list}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $IPSET_CHN) $(get_jump_ipt ${chn_list} "-j MARK --set-mark 88")"
+						[ "${ru_proxy_mode}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $IPSET_CHN) $(get_jump_ipt ${ru_proxy_mode} "-j MARK --set-mark 88")"
 						[ "${use_shunt_node}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "$(dst $shunt_set_name) -j MARK --set-mark 88"
 						[ "${udp_proxy_mode}" != "disable" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_proxy_drop_ports "-j MARK --set-mark 88"
 						echolog "     - ${msg}屏蔽代理 UDP 端口[${udp_proxy_drop_ports}]"
@@ -480,7 +480,7 @@ load_acl() {
 							[ "${use_fakedns}" = "1" ] && $ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} -d $FAKE_IP $(REDIRECT)
 							[ "${use_proxy_list}" = "1" ] && $ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(dst $black_set_name) $(REDIRECT)
 							[ "${use_gfw_list}" = "1" ] && $ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(dst $gfw_set_name) $(REDIRECT)
-							[ "${chn_list}" != "0" ] && $ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(dst $IPSET_CHN) $(get_jump_ipt ${chn_list})
+							[ "${ru_proxy_mode}" != "0" ] && $ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(dst $IPSET_CHN) $(get_jump_ipt ${ru_proxy_mode})
 							[ "${use_shunt_node}" = "1" ] && $ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(dst $shunt_set_name) $(REDIRECT)
 							[ "${tcp_proxy_mode}" != "disable" ] && $ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(REDIRECT)
 						}
@@ -489,7 +489,7 @@ load_acl() {
 							[ "${use_fakedns}" = "1" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} -d $FAKE_IP_6 $(REDIRECT) 2>/dev/null
 							[ "${use_proxy_list}" = "1" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $black6_set_name) $(REDIRECT) 2>/dev/null
 							[ "${use_gfw_list}" = "1" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $gfw6_set_name) $(REDIRECT) 2>/dev/null
-							[ "${chn_list}" != "0" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $IPSET_CHN6) $(get_jump_ipt ${chn_list}) 2>/dev/null
+							[ "${ru_proxy_mode}" != "0" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $IPSET_CHN6) $(get_jump_ipt ${ru_proxy_mode}) 2>/dev/null
 							[ "${use_shunt_node}" = "1" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $shunt6_set_name) $(REDIRECT) 2>/dev/null
 							[ "${tcp_proxy_mode}" != "disable" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(REDIRECT) 2>/dev/null
 						}
@@ -497,7 +497,7 @@ load_acl() {
 						[ "${use_fakedns}" = "1" ] && $ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP ${ipt_j}
 						[ "${use_proxy_list}" = "1" ] && add_port_rules "$ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $black_set_name) ${ipt_j}"
 						[ "${use_gfw_list}" = "1" ] && add_port_rules "$ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $gfw_set_name) ${ipt_j}"
-						[ "${chn_list}" != "0" ] && add_port_rules "$ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $IPSET_CHN) $(get_jump_ipt ${chn_list} "${ipt_j}")"
+						[ "${ru_proxy_mode}" != "0" ] && add_port_rules "$ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $IPSET_CHN) $(get_jump_ipt ${ru_proxy_mode} "${ipt_j}")"
 						[ "${use_shunt_node}" = "1" ] && add_port_rules "$ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $shunt_set_name) ${ipt_j}"
 						[ "${tcp_proxy_mode}" != "disable" ] && add_port_rules "$ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "${ipt_j}"
 						[ -n "${is_tproxy}" ] && $ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY)
@@ -506,7 +506,7 @@ load_acl() {
 							[ "${use_fakedns}" = "1" ] && $ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP_6 -j PSW_RULE 2>/dev/null
 							[ "${use_proxy_list}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $black6_set_name) -j PSW_RULE" 2>/dev/null
 							[ "${use_gfw_list}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $gfw6_set_name) -j PSW_RULE" 2>/dev/null
-							[ "${chn_list}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $IPSET_CHN6) $(get_jump_ipt ${chn_list} "-j PSW_RULE")" 2>/dev/null
+							[ "${ru_proxy_mode}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $IPSET_CHN6) $(get_jump_ipt ${ru_proxy_mode} "-j PSW_RULE")" 2>/dev/null
 							[ "${use_shunt_node}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "$(dst $shunt6_set_name) -j PSW_RULE" 2>/dev/null
 							[ "${tcp_proxy_mode}" != "disable" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source}" $tcp_redir_ports "-j PSW_RULE" 2>/dev/null
 							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY) 2>/dev/null
@@ -528,7 +528,7 @@ load_acl() {
 						[ "${use_fakedns}" = "1" ] && $ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} -d $FAKE_IP -j PSW_RULE
 						[ "${use_proxy_list}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $black_set_name) -j PSW_RULE"
 						[ "${use_gfw_list}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $gfw_set_name) -j PSW_RULE"
-						[ "${chn_list}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $IPSET_CHN) $(get_jump_ipt ${chn_list} "-j PSW_RULE")"
+						[ "${ru_proxy_mode}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $IPSET_CHN) $(get_jump_ipt ${ru_proxy_mode} "-j PSW_RULE")"
 						[ "${use_shunt_node}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $shunt_set_name) -j PSW_RULE"
 						[ "${udp_proxy_mode}" != "disable" ] && add_port_rules "$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "-j PSW_RULE"
 						$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(REDIRECT $udp_port TPROXY)
@@ -537,7 +537,7 @@ load_acl() {
 							[ "${use_fakedns}" = "1" ] && $ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} -d $FAKE_IP_6 -j PSW_RULE 2>/dev/null
 							[ "${use_proxy_list}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $black6_set_name) -j PSW_RULE" 2>/dev/null
 							[ "${use_gfw_list}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $gfw6_set_name) -j PSW_RULE" 2>/dev/null
-							[ "${chn_list}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $IPSET_CHN6) $(get_jump_ipt ${chn_list} "-j PSW_RULE")" 2>/dev/null
+							[ "${ru_proxy_mode}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $IPSET_CHN6) $(get_jump_ipt ${ru_proxy_mode} "-j PSW_RULE")" 2>/dev/null
 							[ "${use_shunt_node}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "$(dst $shunt6_set_name) -j PSW_RULE" 2>/dev/null
 							[ "${udp_proxy_mode}" != "disable" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source}" $udp_redir_ports "-j PSW_RULE" 2>/dev/null
 							$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(REDIRECT $udp_port TPROXY) 2>/dev/null
@@ -551,7 +551,7 @@ load_acl() {
 				$ipt_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp -j RETURN
 				unset ipt_tmp ipt_j _ipt_source msg msg2 _ipv4
 			done
-			unset enabled sid remarks sources use_global_config use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode dns_redirect_port tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports node interface
+			unset enabled sid remarks sources use_global_config use_direct_list use_proxy_list use_block_list use_gfw_list ru_proxy_mode tcp_proxy_mode udp_proxy_mode dns_redirect_port tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports node interface
 			unset tcp_port udp_port node_remark _acl_list use_shunt_node dns_redirect use_fakedns
 		done
 	}
@@ -615,14 +615,14 @@ load_acl() {
 					[ "${USE_FAKEDNS}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "-d $FAKE_IP_6 -j MARK --set-mark 88"
 					[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_BLACK6) -j MARK --set-mark 88"
 					[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_GFW6) -j MARK --set-mark 88"
-					[ "${CHN_LIST}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${CHN_LIST} "-j MARK --set-mark 88")"
+					[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${RU_PROXY_MODE} "-j MARK --set-mark 88")"
 					[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_SHUNT6) -j MARK --set-mark 88"
 					[ "${TCP_PROXY_MODE}" != "disable" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "-j MARK --set-mark 88"
 				}
 				[ "${USE_FAKEDNS}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "-d $FAKE_IP -j MARK --set-mark 88"
 				[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_BLACK) -j MARK --set-mark 88"
 				[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_GFW) -j MARK --set-mark 88"
-				[ "${CHN_LIST}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "-j MARK --set-mark 88")"
+				[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE} "-j MARK --set-mark 88")"
 				[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS $(dst $IPSET_SHUNT) "-j MARK --set-mark 88"
 				[ "${TCP_PROXY_MODE}" != "disable" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p tcp" $TCP_PROXY_DROP_PORTS "-j MARK --set-mark 88"
 				echolog "     - ${msg}屏蔽代理 TCP 端口[${TCP_PROXY_DROP_PORTS}]"
@@ -633,14 +633,14 @@ load_acl() {
 					[ "${USE_FAKEDNS}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "-d $FAKE_IP_6 -j MARK --set-mark 88"
 					[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_BLACK6) -j MARK --set-mark 88"
 					[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_GFW6) -j MARK --set-mark 88"
-					[ "${CHN_LIST}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${CHN_LIST} "-j MARK --set-mark 88")"
+					[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${RU_PROXY_MODE} "-j MARK --set-mark 88")"
 					[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_SHUNT6) -j MARK --set-mark 88"
 					[ "${UDP_PROXY_MODE}" != "disable" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "-j MARK --set-mark 88"
 				}
 				[ "${USE_FAKEDNS}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "-d $FAKE_IP -j MARK --set-mark 88"
 				[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_BLACK) -j MARK --set-mark 88"
 				[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_GFW) -j MARK --set-mark 88"
-				[ "${CHN_LIST}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "-j MARK --set-mark 88")"
+				[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE} "-j MARK --set-mark 88")"
 				[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_SHUNT) -j MARK --set-mark 88"
 				[ "${UDP_PROXY_MODE}" != "disable" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_PROXY_DROP_PORTS "-j MARK --set-mark 88"
 				echolog "     - ${msg}屏蔽代理 UDP 端口[${UDP_PROXY_DROP_PORTS}]"
@@ -672,7 +672,7 @@ load_acl() {
 					[ "${USE_FAKEDNS}" = "1" ] && $ipt_n -A PSW $(comment "默认") -p icmp -d $FAKE_IP $(REDIRECT)
 					[ "${USE_PROXY_LIST}" = "1" ] && $ipt_n -A PSW $(comment "默认") -p icmp $(dst $IPSET_BLACK) $(REDIRECT)
 					[ "${USE_GFW_LIST}" = "1" ] && $ipt_n -A PSW $(comment "默认") -p icmp $(dst $IPSET_GFW) $(REDIRECT)
-					[ "${CHN_LIST}" != "0" ] && $ipt_n -A PSW $(comment "默认") -p icmp $(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST})
+					[ "${RU_PROXY_MODE}" != "0" ] && $ipt_n -A PSW $(comment "默认") -p icmp $(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE})
 					[ "${USE_SHUNT_NODE}" = "1" ] && $ipt_n -A PSW $(comment "默认") -p icmp $(dst $IPSET_SHUNT) $(REDIRECT)
 					[ "${TCP_PROXY_MODE}" != "disable" ] && $ipt_n -A PSW $(comment "默认") -p icmp $(REDIRECT)
 				}
@@ -681,7 +681,7 @@ load_acl() {
 					[ "${USE_FAKEDNS}" = "1" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp -d $FAKE_IP_6 $(REDIRECT)
 					[ "${USE_PROXY_LIST}" = "1" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_BLACK6) $(REDIRECT)
 					[ "${USE_GFW_LIST}" = "1" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_GFW6) $(REDIRECT)
-					[ "${CHN_LIST}" != "0" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_CHN6) $(get_jump_ipt ${CHN_LIST})
+					[ "${RU_PROXY_MODE}" != "0" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_CHN6) $(get_jump_ipt ${RU_PROXY_MODE})
 					[ "${USE_SHUNT_NODE}" = "1" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_SHUNT6) $(REDIRECT)
 					[ "${TCP_PROXY_MODE}" != "disable" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(REDIRECT)
 				}
@@ -689,7 +689,7 @@ load_acl() {
 				[ "${USE_FAKEDNS}" = "1" ] && $ipt_tmp -A PSW $(comment "默认") -p tcp -d $FAKE_IP ${ipt_j}
 				[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ipt_tmp -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_BLACK) ${ipt_j}"
 				[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ipt_tmp -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_GFW) ${ipt_j}"
-				[ "${CHN_LIST}" != "0" ] && add_port_rules "$ipt_tmp -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "${ipt_j}")"
+				[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ipt_tmp -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE} "${ipt_j}")"
 				[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ipt_tmp -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_SHUNT) ${ipt_j}"
 				[ "${TCP_PROXY_MODE}" != "disable" ] && add_port_rules "$ipt_tmp -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "${ipt_j}"
 				[ -n "${is_tproxy}" ]&& $ipt_tmp -A PSW $(comment "默认") -p tcp $(REDIRECT $REDIR_PORT TPROXY)
@@ -698,7 +698,7 @@ load_acl() {
 					[ "${USE_FAKEDNS}" = "1" ] && $ip6t_m -A PSW $(comment "默认") -p tcp -d $FAKE_IP_6 -j PSW_RULE
 					[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_BLACK6) -j PSW_RULE"
 					[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_GFW6) -j PSW_RULE"
-					[ "${CHN_LIST}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${CHN_LIST} "-j PSW_RULE")"
+					[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${RU_PROXY_MODE} "-j PSW_RULE")"
 					[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_SHUNT6) -j PSW_RULE"
 					[ "${TCP_PROXY_MODE}" != "disable" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_REDIR_PORTS "-j PSW_RULE"
 					$ip6t_m -A PSW $(comment "默认") -p tcp $(REDIRECT $REDIR_PORT TPROXY)
@@ -723,7 +723,7 @@ load_acl() {
 				[ "${USE_FAKEDNS}" = "1" ] && $ipt_m -A PSW $(comment "默认") -p udp -d $FAKE_IP -j PSW_RULE
 				[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_BLACK) -j PSW_RULE"
 				[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_GFW) -j PSW_RULE"
-				[ "${CHN_LIST}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "-j PSW_RULE")"
+				[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE} "-j PSW_RULE")"
 				[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_SHUNT) -j PSW_RULE"
 				[ "${UDP_PROXY_MODE}" != "disable" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "-j PSW_RULE"
 				$ipt_m -A PSW $(comment "默认") -p udp $(REDIRECT $REDIR_PORT TPROXY)
@@ -732,7 +732,7 @@ load_acl() {
 					[ "${USE_FAKEDNS}" = "1" ] && $ip6t_m -A PSW $(comment "默认") -p udp -d $FAKE_IP_6 -j PSW_RULE
 					[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_BLACK6) -j PSW_RULE"
 					[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_GFW6) -j PSW_RULE"
-					[ "${CHN_LIST}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${CHN_LIST} "-j PSW_RULE")"
+					[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${RU_PROXY_MODE} "-j PSW_RULE")"
 					[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_SHUNT6) -j PSW_RULE"
 					[ "${UDP_PROXY_MODE}" != "disable" ] && add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "-j PSW_RULE"
 					$ip6t_m -A PSW $(comment "默认") -p udp $(REDIRECT $REDIR_PORT TPROXY)
@@ -897,8 +897,8 @@ add_firewall_rule() {
 	ipset -! create $IPSET_WHITE6 nethash family inet6 maxelem 1048576 timeout 172800
 	ipset -! create $IPSET_BLOCK6 nethash family inet6 maxelem 1048576 timeout 172800
 
-	cat $RULES_PATH/chnroute | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_CHN &/g" -e "s/$/ timeout 0/g" | ipset -! -R
-	cat $RULES_PATH/chnroute6 | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_CHN6 &/g" -e "s/$/ timeout 0/g" | ipset -! -R
+	cat $RULES_PATH/RuProxyIp | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_CHN &/g" -e "s/$/ timeout 0/g" | ipset -! -R
+	cat $RULES_PATH/RuProxyIp | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_CHN6 &/g" -e "s/$/ timeout 0/g" | ipset -! -R
 
 	#导入规则列表、分流规则中的IP列表
 	local USE_PROXY_LIST_ALL=${USE_PROXY_LIST}
@@ -1223,7 +1223,7 @@ add_firewall_rule() {
 				[ "${USE_FAKEDNS}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p tcp" $TCP_PROXY_DROP_PORTS "-d $FAKE_IP -j MARK --set-mark 88"
 				[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_BLACK) -j MARK --set-mark 88"
 				[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_GFW) -j MARK --set-mark 88"
-				[ "${CHN_LIST}" != "0" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "-j MARK --set-mark 88")"
+				[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE} "-j MARK --set-mark 88")"
 				[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p tcp" $TCP_PROXY_DROP_PORTS "$(dst $IPSET_SHUNT) -j MARK --set-mark 88"
 				[ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p tcp" $TCP_PROXY_DROP_PORTS "-j MARK --set-mark 88"
 				echolog "  - ${msg}屏蔽代理 TCP 端口[${TCP_PROXY_DROP_PORTS}]"
@@ -1233,7 +1233,7 @@ add_firewall_rule() {
 				[ "${USE_FAKEDNS}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_PROXY_DROP_PORTS "-d $FAKE_IP -j MARK --set-mark 88"
 				[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_BLACK) -j MARK --set-mark 88"
 				[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_GFW) -j MARK --set-mark 88"
-				[ "${CHN_LIST}" != "0" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "-j MARK --set-mark 88")"
+				[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE} "-j MARK --set-mark 88")"
 				[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_PROXY_DROP_PORTS "$(dst $IPSET_SHUNT) -j MARK --set-mark 88"
 				[ "${LOCALHOST_UDP_PROXY_MODE}" != "disable" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_PROXY_DROP_PORTS "-j MARK --set-mark 88"
 				echolog "  - ${msg}屏蔽代理 UDP 端口[${UDP_PROXY_DROP_PORTS}]"
@@ -1275,7 +1275,7 @@ add_firewall_rule() {
 				[ "${USE_FAKEDNS}" = "1" ] && $ipt_n -A PSW_OUTPUT -p icmp -d $FAKE_IP $(REDIRECT)
 				[ "${USE_PROXY_LIST}" = "1" ] && $ipt_n -A PSW_OUTPUT -p icmp $(dst $IPSET_BLACK) $(REDIRECT)
 				[ "${USE_GFW_LIST}" = "1" ] && $ipt_n -A PSW_OUTPUT -p icmp $(dst $IPSET_GFW) $(REDIRECT)
-				[ "${CHN_LIST}" != "0" ] && $ipt_n -A PSW_OUTPUT -p icmp $(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST})
+				[ "${RU_PROXY_MODE}" != "0" ] && $ipt_n -A PSW_OUTPUT -p icmp $(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE})
 				[ "${USE_SHUNT_NODE}" = "1" ] && $ipt_n -A PSW_OUTPUT -p icmp $(dst $IPSET_SHUNT) $(REDIRECT)
 				[ -n "${LOCALHOST_TCP_PROXY_MODE}" ] && [ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && $ipt_n -A PSW_OUTPUT -p icmp $(REDIRECT)
 			}
@@ -1285,7 +1285,7 @@ add_firewall_rule() {
 				[ "${USE_FAKEDNS}" = "1" ] && $ip6t_n -A PSW_OUTPUT -p ipv6-icmp -d $FAKE_IP_6 $(REDIRECT)
 				[ "${USE_PROXY_LIST}" = "1" ] && $ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(dst $IPSET_BLACK6) $(REDIRECT)
 				[ "${USE_GFW_LIST}" = "1" ] && $ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(dst $IPSET_GFW6) $(REDIRECT)
-				[ "${CHN_LIST}" != "0" ] && $ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(dst $IPSET_CHN6) $(get_jump_ipt ${CHN_LIST})
+				[ "${RU_PROXY_MODE}" != "0" ] && $ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(dst $IPSET_CHN6) $(get_jump_ipt ${RU_PROXY_MODE})
 				[ "${USE_SHUNT_NODE}" = "1" ] && $ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(dst $IPSET_SHUNT6) $(REDIRECT)
 				[ -n "${LOCALHOST_TCP_PROXY_MODE}" ] && [ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && $ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(REDIRECT)
 			}
@@ -1294,7 +1294,7 @@ add_firewall_rule() {
 				[ "${USE_FAKEDNS}" = "1" ] && $ipt_tmp -A PSW_OUTPUT -p tcp -d $FAKE_IP ${ipt_j}
 				[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ipt_tmp -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_BLACK) ${ipt_j}"
 				[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ipt_tmp -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_GFW) ${ipt_j}"
-				[ "${CHN_LIST}" != "0" ] && add_port_rules "$ipt_tmp -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "${ipt_j}")"
+				[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ipt_tmp -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE} "${ipt_j}")"
 				[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ipt_tmp -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_SHUNT) ${ipt_j}"
 				[ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && add_port_rules "$ipt_tmp -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "${ipt_j}"
 				[ -n "${is_tproxy}" ] && $ipt_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $REDIR_PORT TPROXY)
@@ -1310,7 +1310,7 @@ add_firewall_rule() {
 					[ "${USE_FAKEDNS}" = "1" ] && $ip6t_m -A PSW_OUTPUT -p tcp -d $FAKE_IP_6 -j PSW_RULE
 					[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_BLACK6) -j PSW_RULE"
 					[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_GFW6) -j PSW_RULE"
-					[ "${CHN_LIST}" != "0" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${CHN_LIST} "-j PSW_RULE")"
+					[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${RU_PROXY_MODE} "-j PSW_RULE")"
 					[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "$(dst $IPSET_SHUNT6) -j PSW_RULE"
 					[ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p tcp" $TCP_REDIR_PORTS "-j PSW_RULE"
 					$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $REDIR_PORT TPROXY)
@@ -1349,7 +1349,7 @@ add_firewall_rule() {
 				[ "${USE_FAKEDNS}" = "1" ] && $ipt_m -A PSW_OUTPUT -p udp -d $FAKE_IP -j PSW_RULE
 				[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_BLACK) -j PSW_RULE"
 				[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_GFW) -j PSW_RULE"
-				[ "${CHN_LIST}" != "0" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "-j PSW_RULE")"
+				[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_CHN) $(get_jump_ipt ${RU_PROXY_MODE} "-j PSW_RULE")"
 				[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_SHUNT) -j PSW_RULE"
 				[ "${LOCALHOST_UDP_PROXY_MODE}" != "disable" ] && add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "-j PSW_RULE"
 				$ipt_m -A PSW $(comment "本机") -p udp -i lo $(REDIRECT $REDIR_PORT TPROXY)
@@ -1362,7 +1362,7 @@ add_firewall_rule() {
 					[ "${USE_FAKEDNS}" = "1" ] && $ip6t_m -A PSW_OUTPUT -p udp -d $FAKE_IP_6 -j PSW_RULE
 					[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_BLACK6) -j PSW_RULE"
 					[ "${USE_GFW_LIST}" = "1" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_GFW6) -j PSW_RULE"
-					[ "${CHN_LIST}" != "0" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${CHN_LIST} "-j PSW_RULE")"
+					[ "${RU_PROXY_MODE}" != "0" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_CHN6) $(get_jump_ipt ${RU_PROXY_MODE} "-j PSW_RULE")"
 					[ "${USE_SHUNT_NODE}" = "1" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_SHUNT6) -j PSW_RULE"
 					[ "${LOCALHOST_UDP_PROXY_MODE}" != "disable" ] && add_port_rules "$ip6t_m -A PSW_OUTPUT -p udp" $UDP_REDIR_PORTS "-j PSW_RULE"
 					$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(REDIRECT $REDIR_PORT TPROXY)

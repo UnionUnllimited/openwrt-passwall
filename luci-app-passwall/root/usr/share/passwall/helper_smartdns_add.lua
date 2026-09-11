@@ -15,7 +15,7 @@ local USE_DIRECT_LIST = var["-USE_DIRECT_LIST"]
 local USE_PROXY_LIST = var["-USE_PROXY_LIST"]
 local USE_BLOCK_LIST = var["-USE_BLOCK_LIST"]
 local USE_GFW_LIST = var["-USE_GFW_LIST"]
-local CHN_LIST = var["-CHN_LIST"]
+local RU_PROXY_MODE = var["-RU_PROXY_MODE"]
 local DEFAULT_PROXY_MODE = var["-DEFAULT_PROXY_MODE"]
 local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
 local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
@@ -260,7 +260,7 @@ end
 --设置默认 DNS 分组(托底组)
 local DEFAULT_DNS_GROUP = (USE_DEFAULT_DNS == "direct" and LOCAL_GROUP) or
                           (USE_DEFAULT_DNS == "remote" and REMOTE_GROUP)
-local only_global = (DEFAULT_PROXY_MODE == "proxy" and CHN_LIST == "0" and USE_GFW_LIST == "0") and 1 --没有启用中国列表和GFW列表时(全局)
+local only_global = (DEFAULT_PROXY_MODE == "proxy" and RU_PROXY_MODE == "0" and USE_GFW_LIST == "0") and 1 --没有启用中国列表和GFW列表时(全局)
 if only_global == 1 then
 	DEFAULT_DNS_GROUP = REMOTE_GROUP
 end
@@ -506,13 +506,13 @@ if USE_GFW_LIST == "1" and is_file_nonzero(RULES_PATH .. "/gfwlist") then
 end
 
 --中国列表
-if CHN_LIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
-	local domain_set_name = "passwall-chnlist"
+if RU_PROXY_MODE ~= "0" and is_file_nonzero(RULES_PATH .. "/RuProxy") then
+	local domain_set_name = "passwall-ruproxy"
 	tmp_lines = {
-		string.format("domain-set -name %s -file %s", domain_set_name, RULES_PATH .. "/chnlist")
+		string.format("domain-set -name %s -file %s", domain_set_name, RULES_PATH .. "/RuProxy")
 	}
 
-	if CHN_LIST == "direct" then
+	if RU_PROXY_MODE == "direct" then
 		local sets = {
 			"#4:" .. setflag .. "psw_chn",
 			"#6:" .. setflag .. "psw_chn6"
@@ -522,11 +522,11 @@ if CHN_LIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 		domain_rules_str = domain_rules_str .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or "")
 		table.insert(tmp_lines, domain_rules_str)
 		insert_array_after(config_lines, tmp_lines, "#--2")
-		log(string.format("  - 中国域名表(chnroute)使用分组：%s", LOCAL_GROUP or "默认"))
+		log(string.format("  - RuProxy使用分组：%s", LOCAL_GROUP or "默认"))
 	end
 
 	--回中国模式
-	if CHN_LIST == "proxy" then
+	if RU_PROXY_MODE == "proxy" then
 		local domain_rules_str = string.format('domain-rules /domain-set:%s/ -nameserver %s', domain_set_name, REMOTE_GROUP)
 		domain_rules_str = domain_rules_str .. " -speed-check-mode none"
 		domain_rules_str = domain_rules_str .. " -no-serve-expired"
@@ -541,7 +541,7 @@ if CHN_LIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 		end
 		table.insert(tmp_lines, domain_rules_str)
 		insert_array_after(config_lines, tmp_lines, "#--2")
-		log(string.format("  - 中国域名表(chnroute)使用分组：%s", REMOTE_GROUP or "默认"))
+		log(string.format("  - RuProxy使用分组：%s", REMOTE_GROUP or "默认"))
 	end
 end
 
@@ -614,7 +614,7 @@ if IS_SHUNT_NODE then
 		end
 	end
 
-	if USE_GFW_LIST == "1" and CHN_LIST == "0" and USE_GEOVIEW == "1" then  --仅GFW模式解析geosite
+	if USE_GFW_LIST == "1" and RU_PROXY_MODE == "0" and USE_GEOVIEW == "1" then  --仅GFW模式解析geosite
 		local return_white, return_shunt
 		if geosite_white_arg ~= "" then
 			return_white = get_geosite(geosite_white_arg, file_white_host)

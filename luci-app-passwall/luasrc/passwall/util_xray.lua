@@ -900,7 +900,7 @@ function gen_config(var)
 	local no_run = var["no_run"]
 	local use_proxy_list = var["use_proxy_list"]
 	local use_gfw_list = var["use_gfw_list"]
-	local chn_list = var["chn_list"]
+	local ru_proxy_mode = var["ru_proxy_mode"]
 
 	local dns_domain_rules = {}
 	local dns = nil
@@ -1389,7 +1389,7 @@ function gen_config(var)
 			local function foreach_shunt_rule(callback)
 				api.uci_foreach_c("shunt_rules", callback)
 
-				if use_gfw_list ~= "1" or chn_list ~= "0" then return end
+				if use_gfw_list ~= "1" or ru_proxy_mode ~= "0" then return end
 
 				-- GFW 模式下使用分流节点时添加特定规则
 				local function read_proxy_list(path)
@@ -1531,7 +1531,7 @@ function gen_config(var)
 				end
 			end)
 
-			if use_gfw_list == "1" and chn_list == "0" then  -- GFW 模式下使用分流节点时添加兜底规则
+			if use_gfw_list == "1" and ru_proxy_mode == "0" then  -- GFW 模式下使用分流节点时添加兜底规则
 				table.insert(rules, {
 					ruleTag = "GFW_Mode_Default",
 					outboundTag = "direct",
@@ -1796,7 +1796,7 @@ function gen_config(var)
 			})
 
 			-- remote dns outbound
-			local chn_list = api.uci_get_c("@global[0]", "chn_list") or "direct"
+			local ru_proxy_mode = api.uci_get_c("@global[0]", "ru_proxy_mode") or "proxy"
 			remote_dns_outbound = {
 				tag = "dns-out",
 				protocol = "dns",
@@ -1804,7 +1804,7 @@ function gen_config(var)
 					tag = (dns_outbound_tag ~= "blackhole") and dns_outbound_tag or "direct"
 				} or nil,
 				settings = {
-					address = (chn_list ~= "proxy") and "8.8.8.8" or "223.5.5.5",
+					address = (ru_proxy_mode ~= "proxy") and "8.8.8.8" or "223.5.5.5",
 					port = 53,
 					network = "tcp",
 					nonIPQuery = (api.compare_versions(xray_version, "<", "26.4.25")) and "reject" or nil, -- Todo is to remove it

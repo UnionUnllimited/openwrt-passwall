@@ -169,7 +169,7 @@ function add_rule(var)
 	local USE_PROXY_LIST = var["-USE_PROXY_LIST"]
 	local USE_BLOCK_LIST = var["-USE_BLOCK_LIST"]
 	local USE_GFW_LIST = var["-USE_GFW_LIST"]
-	local CHN_LIST = var["-CHN_LIST"]
+	local RU_PROXY_MODE = var["-RU_PROXY_MODE"]
 	local DEFAULT_PROXY_MODE = var["-DEFAULT_PROXY_MODE"]
 	local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
 	local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
@@ -323,7 +323,7 @@ function add_rule(var)
 	local cache_text = ""
 	local nodes_address_md5 = sys.exec("echo -n $(uci show passwall | grep '\\.address') | md5sum")
 	local new_rules = sys.exec("echo -n $(find /usr/share/passwall/rules -type f | xargs md5sum)")
-	local new_text = TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. USE_DEFAULT_DNS .. CHINADNS_DNS .. USE_DIRECT_LIST .. USE_PROXY_LIST .. USE_BLOCK_LIST .. USE_GFW_LIST .. CHN_LIST .. DEFAULT_PROXY_MODE .. NO_PROXY_IPV6 .. nodes_address_md5 .. new_rules .. NFTFLAG
+	local new_text = TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. USE_DEFAULT_DNS .. CHINADNS_DNS .. USE_DIRECT_LIST .. USE_PROXY_LIST .. USE_BLOCK_LIST .. USE_GFW_LIST .. RU_PROXY_MODE .. DEFAULT_PROXY_MODE .. NO_PROXY_IPV6 .. nodes_address_md5 .. new_rules .. NFTFLAG
 	if fs.access(CACHE_TEXT_FILE) then
 		for line in io.lines(CACHE_TEXT_FILE) do
 			cache_text = line
@@ -342,13 +342,13 @@ function add_rule(var)
 		if USE_DEFAULT_DNS == "remote" then
 			dnsmasq_default_dns = TUN_DNS
 		end
-		if USE_DEFAULT_DNS == "remote" and CHN_LIST == "direct" then
+		if USE_DEFAULT_DNS == "remote" and RU_PROXY_MODE == "direct" then
 			dnsmasq_default_dns = TUN_DNS
 		end
 	end
 
 	local only_global
-	if DEFAULT_PROXY_MODE == "proxy" and CHN_LIST == "0" and USE_GFW_LIST == "0" then
+	if DEFAULT_PROXY_MODE == "proxy" and RU_PROXY_MODE == "0" and USE_GFW_LIST == "0" then
 		--没有启用中国列表和GFW列表时
 		dnsmasq_default_dns = TUN_DNS
 		only_global = 1
@@ -568,12 +568,12 @@ function add_rule(var)
 		end
 
 		--中国列表
-		if CHN_LIST ~= "0" then
+		if RU_PROXY_MODE ~= "0" then
 			fwd_dns = nil
-			if CHN_LIST == "direct" then
+			if RU_PROXY_MODE == "direct" then
 				fwd_dns = LOCAL_DNS
 			end
-			if CHN_LIST == "proxy" then
+			if RU_PROXY_MODE == "proxy" then
 				fwd_dns = TUN_DNS
 			end
 			if USE_CHINADNS_NG == "1" then
@@ -584,18 +584,18 @@ function add_rule(var)
 					setflag_4 .. "psw_chn",
 					setflag_6 .. "psw_chn6"
 				}
-				if CHN_LIST == "proxy" then
+				if RU_PROXY_MODE == "proxy" then
 					if NO_PROXY_IPV6 == "1" then
 						sets = {
 							setflag_4 .. "psw_chn"
 						}
 					end
 				end
-				local f = io.open("/usr/share/passwall/rules/chnlist")
+				local f = io.open("/usr/share/passwall/rules/RuProxy")
 				if f then
 					for line in f:lines() do
 						if line ~= "" and not line:find("#") and not check_excluded_domain(line) then
-							if CHN_LIST == "proxy" and NO_PROXY_IPV6 == "1" then
+							if RU_PROXY_MODE == "proxy" and NO_PROXY_IPV6 == "1" then
 								set_domain_address(line, "::")
 							end
 							if dnsmasq_default_dns == fwd_dns then
@@ -607,7 +607,7 @@ function add_rule(var)
 						end
 					end
 					f:close()
-					log(string.format("  - 中国域名表(chnroute)：%s", fwd_dns or "默认"))
+					log(string.format("  - RuProxy：%s", fwd_dns or "默认"))
 				end
 			end
 		end
@@ -682,7 +682,7 @@ function add_rule(var)
 						end
 					end
 
-					if USE_GFW_LIST == "1" and CHN_LIST == "0" and USE_GEOVIEW == "1" and geosite_arg ~= "" then  --仅GFW模式解析geosite
+					if USE_GFW_LIST == "1" and RU_PROXY_MODE == "0" and USE_GEOVIEW == "1" and geosite_arg ~= "" then  --仅GFW模式解析geosite
 						foreach_geosite(geosite_arg, function(line)
 							add_excluded_domain(line)
 							if no_ipv6 then
