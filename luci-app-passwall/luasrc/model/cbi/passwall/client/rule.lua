@@ -13,45 +13,26 @@ o = s:option(Flag, "adblock", translate("Enable adblock"))
 o.rmempty = false
 ]]--
 
----- gfwlist URL
-o = s:option(DynamicList, "gfwlist_url", translate("GFW domains(gfwlist) Update URL"))
-o:depends("geo2rule", false)
-o:value("https://cdn.jsdelivr.net/gh/YW5vbnltb3Vz/domain-list-community@release/gfwlist.txt", translate("v2fly/domain-list-community"))
-o:value("https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/gfw.txt", translate("Loyalsoldier/v2ray-rules-dat"))
-o:value("https://cdn.jsdelivr.net/gh/Loukky/gfwlist-by-loukky/gfwlist.txt", translate("Loukky/gfwlist-by-loukky"))
-o:value("https://cdn.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt", translate("gfwlist/gfwlist"))
-o:value("https://cdn.jsdelivr.net/gh/pexcn/daily@gh-pages/gfwlist/gfwlist.txt", translate("pexcn/gfwlist"))
-o.default = o.keylist[2]
+---- RuProxy URL (домены)
+o = s:option(DynamicList, "ru_proxy_url", translatef("%s Update URL", "RuProxy"))
+o:value("https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/domains_all.lst", translate("Re-filter-lists/domains_all"))
+o:value("https://antifilter.download/list/domains.lst", translate("antifilter.download/domains (large)"))
+o.default = o.keylist[1]
 
-----chnroute  URL
-o = s:option(DynamicList, "chnroute_url", translate("China IPs(chnroute) Update URL"))
-o:depends("geo2rule", false)
-o:value("https://ispip.clang.cn/all_cn.txt", translate("Clang.CN"))
-o:value("https://cdn.jsdelivr.net/gh/gaoyifan/china-operator-ip@ip-lists/china.txt", translate("gaoyifan/china-operator-ip/china"))
-o:value("https://cdn.jsdelivr.net/gh/soffchen/GeoIP2-CN@release/CN-ip-cidr.txt", translate("soffchen/GeoIP2-CN"))
-o:value("https://cdn.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/CN-ip-cidr.txt", translate("Hackl0us/GeoIP2-CN"))
-o:value("https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_IP_No_IPv6.txt", translate("ios_rule_script/ChinaMax_IP_No_IPv6"))
-o:value("https://cdn.jsdelivr.net/gh/pexcn/daily@gh-pages/chnroute/chnroute.txt", translate("pexcn/chnroute"))
+---- RuProxyIp URL
+o = s:option(DynamicList, "ru_proxy_ip_url", translatef("%s Update URL", "RuProxyIp"))
+o:value("https://antifilter.download/list/allyouneed.lst", translate("antifilter.download/allyouneed"))
+o:value("https://antifilter.download/list/ipsum.lst", translate("antifilter.download/ipsum"))
+o:value("https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/ipsum.lst", translate("Re-filter-lists/ipsum"))
+o.default = o.keylist[1]
 
-----chnroute6 URL
-o = s:option(DynamicList, "chnroute6_url", translate("China IPv6s(chnroute6) Update URL"))
-o:depends("geo2rule", false)
-o:value("https://ispip.clang.cn/all_cn_ipv6.txt", translate("Clang.CN.IPv6"))
-o:value("https://cdn.jsdelivr.net/gh/gaoyifan/china-operator-ip@ip-lists/china6.txt", translate("gaoyifan/china-operator-ip/china6"))
-o:value("https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_IP.txt", translate("ios_rule_script/ChinaMax_IP"))
-o:value("https://cdn.jsdelivr.net/gh/pexcn/daily@gh-pages/chnroute/chnroute6.txt", translate("pexcn/chnroute6"))
+---- RuDirect URL (домены)
+o = s:option(DynamicList, "ru_direct_url", translatef("%s Update URL", "RuDirect"))
 
-----chnlist URL
-o = s:option(DynamicList, "chnlist_url", translate("China List(Chnlist) Update URL"))
-o:depends("geo2rule", false)
-o:value("https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf", translate("felixonmars/domains.china"))
-o:value("https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf", translate("felixonmars/apple.china"))
-o:value("https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf", translate("felixonmars/google.china"))
-o:value("https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/china-list.txt", translate("Loyalsoldier/china-list"))
-o:value("https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/apple-cn.txt", translate("Loyalsoldier/apple-cn"))
-o:value("https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/google-cn.txt", translate("Loyalsoldier/google-cn"))
-o:value("https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_Domain.txt", translate("ios_rule_script/ChinaMax_Domain"))
-o:value("https://cdn.jsdelivr.net/gh/pexcn/daily@gh-pages/chinalist/chinalist.txt", translate("pexcn/chinalist"))
+---- RuDirectIp URL
+o = s:option(DynamicList, "ru_direct_ip_url", translatef("%s Update URL", "RuDirectIp"))
+o:value("https://raw.githubusercontent.com/ipverse/rir-ip/master/country/ru/ipv4-aggregated.txt", translate("ipverse/rir-ip RU IPv4"))
+o:value("https://raw.githubusercontent.com/ipverse/rir-ip/master/country/ru/ipv6-aggregated.txt", translate("ipverse/rir-ip RU IPv6"))
 
 if has_xray or has_singbox then
 	o = s:option(Value, "geoip_url", translate("GeoIP Update URL"))
@@ -131,8 +112,8 @@ o.rmempty = true
 
 ---- 更新选项，始终被js隐藏
 local flags = {
-	"gfwlist_update", "chnroute_update", "chnroute6_update",
-	"chnlist_update", "geoip_update", "geosite_update"
+	"ru_proxy_update", "ru_proxy_ip_update", "ru_direct_update",
+	"ru_direct_ip_update", "geoip_update", "geosite_update"
 }
 for _, f in ipairs(flags) do
 	o = s:option(Flag, f)

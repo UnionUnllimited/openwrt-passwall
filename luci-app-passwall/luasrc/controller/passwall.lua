@@ -100,9 +100,6 @@ function index()
 	entry({"admin", "services", appname, "add_shunt_rule"}, call("add_shunt_rule")).leaf = true
 	entry({"admin", "services", appname, "delete_select_shunt_rules"}, call("delete_select_shunt_rules")).leaf = true
 
-	--[[rule_list]]
-	entry({"admin", "services", appname, "read_rulelist"}, call("read_rulelist")).leaf = true
-
 	--[[Components update]]
 	entry({"admin", "services", appname, "check_passwall"}, call("app_check")).leaf = true
 	local coms = require "luci.passwall.com"
@@ -380,14 +377,14 @@ function connect_status()
 	e.use_time = ""
 	local url = http.formvalue("url")
 	local aliyun = string.find(url, "aliyun")
-	local chn_list = uci_get("@global[0]", "chn_list") or "direct"
-	local gfw_list = uci_get("@global[0]", "use_gfw_list") or "1"
+	local direct_ip_mode = uci_get("@global[0]", "ru_direct_ip_mode") or "direct"
+	local proxy_list_mode = uci_get("@global[0]", "ru_proxy_mode") or "proxy"
 	local proxy_mode = uci_get("@global[0]", "tcp_proxy_mode") or "proxy"
 	local localhost_proxy = uci_get("@global[0]", "localhost_proxy") or "1"
 	local socks_server = (localhost_proxy == "0") and api.get_cache_var("GLOBAL_SOCKS_server") or ""
 	url = "-w %{http_code}:%{time_pretransfer} " .. url
 	if socks_server and socks_server ~= "" then
-		if (chn_list == "proxy" and gfw_list == "0" and proxy_mode ~= "proxy" and aliyun ~= nil) or (chn_list == "0" and gfw_list == "0" and proxy_mode == "proxy") then
+		if (direct_ip_mode == "proxy" and proxy_list_mode == "0" and proxy_mode ~= "proxy" and aliyun ~= nil) or (direct_ip_mode == "0" and proxy_list_mode == "0" and proxy_mode == "proxy") then
 		-- 中国列表+阿里 or 全局
 			url = "-x socks5h://" .. socks_server .. " " .. url
 		elseif aliyun == nil then
@@ -818,25 +815,6 @@ function com_version(comname)
 	http_write_json_ok(version)
 end
 
-function read_rulelist()
-	local rule_type = http.formvalue("type")
-	local rule_path
-	if rule_type == "gfw" then
-		rule_path = "/usr/share/passwall/rules/gfwlist"
-	elseif rule_type == "chn" then
-		rule_path = "/usr/share/passwall/rules/chnlist"
-	elseif rule_type == "chnroute" then
-		rule_path = "/usr/share/passwall/rules/chnroute"
-	else
-		http.status(400, "Invalid rule type")
-		return
-	end
-	if fs.access(rule_path) then
-		http.prepare_content("text/plain")
-		http.write(fs.readfile(rule_path))
-	end
-end
-
 local backup_files = {
     "/etc/config/passwall",
     "/etc/config/passwall_server",
@@ -846,6 +824,10 @@ local backup_files = {
     "/usr/share/passwall/rules/direct_ip",
     "/usr/share/passwall/rules/proxy_host",
     "/usr/share/passwall/rules/proxy_ip",
+    "/usr/share/passwall/rules/RuDirect",
+    "/usr/share/passwall/rules/RuDirectIp",
+    "/usr/share/passwall/rules/RuProxy",
+    "/usr/share/passwall/rules/RuProxyIp",
     "/usr/share/passwall/rules/domains_excluded"
 }
 

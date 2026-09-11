@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=26.9.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_PO_VERSION:=$(PKG_VERSION)
 
 PKG_CONFIG_DEPENDS:= \
@@ -159,6 +159,10 @@ define Package/$(PKG_NAME)/conffiles
 /usr/share/passwall/rules/proxy_ip
 /usr/share/passwall/rules/block_host
 /usr/share/passwall/rules/block_ip
+/usr/share/passwall/rules/RuDirect
+/usr/share/passwall/rules/RuDirectIp
+/usr/share/passwall/rules/RuProxy
+/usr/share/passwall/rules/RuProxyIp
 /usr/share/passwall/rules/lanlist_ipv4
 /usr/share/passwall/rules/lanlist_ipv6
 /usr/share/passwall/rules/domains_excluded

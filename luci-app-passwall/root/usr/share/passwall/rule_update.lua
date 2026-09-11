@@ -401,7 +401,7 @@ end
 
 --fetch rule
 local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries)
-	local sret = 0
+	local ok_count, fail_count = 0, 0
 	local max_attempts = max_retries or 2
 	local rule_dataset = {}
 	local file_tmp = "/tmp/" .. rule_name .. "_tmp"
@@ -483,14 +483,17 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 				end
 				f:close()
 			end
+			ok_count = ok_count + 1
 		else
-			sret = 1
-			log(string.format("%s 第%d条规则: %s 下载失败！", rule_name, k, v))
+			fail_count = fail_count + 1
+			log(string.format("%s 第%d条规则: %s 下载失败，已跳过该资源。", rule_name, k, v))
 		end
 		os.remove(current_file)
 	end
 
-	if sret == 0 then
+	-- 只要有一个资源可用就写入列表，无法下载的资源直接跳过；
+	-- 全部资源都失败时保留原列表，避免被空列表覆盖。
+	if ok_count > 0 and next(rule_dataset) ~= nil then
 		local result_list = {}
 		for line, _ in pairs(rule_dataset) do table.insert(result_list, line) end
 		table.sort(result_list)
@@ -517,13 +520,17 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 			end
 			os.execute(string.format("mv -f %s %s", file_tmp, rule_final_path))
 			if not rollback then reboot = 1 end
-			log(string.format("%s 更新成功，总规则数 %d 条。", rule_name, #result_list))
+			if fail_count > 0 then
+				log(string.format("%s 更新成功，总规则数 %d 条（已跳过 %d 个无法下载的资源）。", rule_name, #result_list, fail_count))
+			else
+				log(string.format("%s 更新成功，总规则数 %d 条。", rule_name, #result_list))
+			end
 		else
 			log(rule_name .. " 版本一致，无需更新。")
 			os.remove(file_tmp)
 		end
 	else
-		log(rule_name .. " 更新失败（部分或全部资源无法下载）。")
+		log(rule_name .. " 所有资源均无法下载，保留原列表。")
 		os.remove(file_tmp)
 	end
 	return 0

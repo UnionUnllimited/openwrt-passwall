@@ -278,8 +278,8 @@ end
 
 function curl_direct(url, file, args)
 	--直连访问
-	local chn_list = uci_get_c("@global[0]", "chn_list") or "direct"
-	local Dns = (chn_list == "proxy") and "1.1.1.1" or "223.5.5.5"
+	local ru_direct_ip_mode = uci_get_c("@global[0]", "ru_direct_ip_mode") or "direct"
+	local Dns = (ru_direct_ip_mode == "proxy") and "1.1.1.1" or "77.88.8.8"
 	if not args then args = {} end
 	local tmp_args = clone(args)
 	local domain, port = get_domain_port_from_url(url)

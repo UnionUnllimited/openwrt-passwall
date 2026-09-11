@@ -12,9 +12,13 @@ m:appendTemplate("/cbi/nodes_listvalue_com")
 
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
-local has_gfwlist = api.fs.access("/usr/share/passwall/rules/gfwlist")
-local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
-local has_chnroute = api.fs.access("/usr/share/passwall/rules/chnroute")
+-- Режим каждого из списков Ru*: 0 — не использовать, direct — в обход, proxy — через прокси.
+local ru_lists = {
+	{ option = "ru_proxy_mode",     label = "RuProxy",     default = "proxy"  },
+	{ option = "ru_proxy_ip_mode",  label = "RuProxyIp",   default = "proxy"  },
+	{ option = "ru_direct_mode",    label = "RuDirect",    default = "direct" },
+	{ option = "ru_direct_ip_mode", label = "RuDirectIp",  default = "direct" }
+}
 
 local port_validate = function(self, value, t)
 	return value:gsub("-", ":")
@@ -278,18 +282,12 @@ o = s:option(Flag, "use_block_list", translatef("Use %s", translate("Block List"
 o.default = "1"
 o:depends({ _acl_node_bool = "1" })
 
-if has_gfwlist then
-	o = s:option(Flag, "use_gfw_list", translatef("Use %s", translate("GFW List")))
-	o.default = "1"
-	o:depends({ _acl_node_bool = "1" })
-end
-
-if has_chnlist or has_chnroute then
-	o = s:option(ListValue, "chn_list", translate("China List"))
+for _, v in ipairs(ru_lists) do
+	o = s:option(ListValue, v.option, translatef("%s Mode", v.label))
 	o:value("0", translate("Close(Not use)"))
 	o:value("direct", translate("Direct Connection"))
 	o:value("proxy", translate("Proxy"))
-	o.default = "direct"
+	o.default = v.default
 	o:depends({ _acl_node_bool = "1" })
 end
 
@@ -504,7 +502,7 @@ o.description = desc
 		.. "<li>" .. translate("Do not accept: Wait and use Remote DNS Reply.") .. "</li>"
 		.. "<li>" .. translate("Accept: Trust the Reply, using this option can improve DNS resolution speeds for some mainland IPv4-only sites.") .. "</li>"
 		.. "</ul>"
-o:depends({dns_shunt = "chinadns-ng", tcp_proxy_mode = "proxy", chn_list = "direct"})
+o:depends({dns_shunt = "chinadns-ng", tcp_proxy_mode = "proxy", ru_direct_mode = "direct"})
 
 o = s:option(Flag, "force_https_soa", translate("Force HTTPS SOA"), translate("Force queries with qtype 65 to respond with an SOA record."))
 o.default = "0"
@@ -516,7 +514,7 @@ o.default = "direct"
 o:value("remote", translate("Remote DNS"))
 o:value("direct", translate("Direct DNS"))
 o.description = desc .. "</ul>"
-o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
+o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", ru_direct_mode = "direct"})
 
 local o_node = s.fields["node"]
 for k, v in pairs(socks_list) do

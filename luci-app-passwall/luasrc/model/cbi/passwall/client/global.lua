@@ -3,9 +3,14 @@ datatypes = api.datatypes
 local fs = api.fs
 has_singbox = api.finded_com("sing-box")
 has_xray = api.finded_com("xray")
-local has_gfwlist = fs.access("/usr/share/passwall/rules/gfwlist")
-local has_chnlist = fs.access("/usr/share/passwall/rules/chnlist")
-local has_chnroute = fs.access("/usr/share/passwall/rules/chnroute")
+
+-- Режим каждого из списков Ru*: 0 — не использовать, direct — в обход, proxy — через прокси.
+local ru_lists = {
+	{ option = "ru_proxy_mode",     label = "RuProxy",     default = "proxy"  },
+	{ option = "ru_proxy_ip_mode",  label = "RuProxyIp",   default = "proxy"  },
+	{ option = "ru_direct_mode",    label = "RuDirect",    default = "direct" },
+	{ option = "ru_direct_ip_mode", label = "RuDirectIp",  default = "direct" }
+}
 
 api.set_default_cbi()
 
@@ -483,16 +488,16 @@ o.description = desc
 		.. "<li>" .. translate("Do not accept: Wait and use Remote DNS Reply.") .. "</li>"
 		.. "<li>" .. translate("Accept: Trust the Reply, using this option can improve DNS resolution speeds for some mainland IPv4-only sites.") .. "</li>"
 		.. "</ul>"
-o:depends({dns_shunt = "chinadns-ng", tcp_proxy_mode = "proxy", chn_list = "direct"})
+o:depends({dns_shunt = "chinadns-ng", tcp_proxy_mode = "proxy", ru_direct_mode = "direct"})
 
 o = s:taboption("DNS", ListValue, "use_default_dns", translate("Default DNS"))
 o.default = "direct"
 o:value("remote", translate("Remote DNS"))
 o:value("direct", translate("Direct DNS"))
 o.description = desc .. "</ul>"
-o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
+o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", ru_direct_mode = "direct"})
 if api.is_finded("smartdns") then
-	o:depends({dns_shunt = "smartdns", tcp_proxy_mode = "proxy", chn_list = "direct"})
+	o:depends({dns_shunt = "smartdns", tcp_proxy_mode = "proxy", ru_direct_mode = "direct"})
 end
 
 o = s:taboption("DNS", Flag, "force_https_soa", translate("Force HTTPS SOA"), translate("Force queries with qtype 65 to respond with an SOA record."))
@@ -531,17 +536,12 @@ o.default = "1"
 o = s:taboption("Proxy", Flag, "use_block_list", translatef("Use %s", translate("Block List")))
 o.default = "1"
 
-if has_gfwlist then
-	o = s:taboption("Proxy", Flag, "use_gfw_list", translatef("Use %s", translate("GFW List")))
-	o.default = "1"
-end
-
-if has_chnlist or has_chnroute then
-	o = s:taboption("Proxy", ListValue, "chn_list", translate("China List"))
+for _, v in ipairs(ru_lists) do
+	o = s:taboption("Proxy", ListValue, v.option, translatef("%s Mode", v.label))
 	o:value("0", translate("Close(Not use)"))
 	o:value("direct", translate("Direct Connection"))
 	o:value("proxy", translate("Proxy"))
-	o.default = "direct"
+	o.default = v.default
 end
 
 ---- TCP Default Proxy Mode

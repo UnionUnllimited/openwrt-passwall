@@ -3,9 +3,6 @@ local fs = api.fs
 local sys = api.sys
 local datatypes = api.datatypes
 local path = string.format("/usr/share/%s/rules/", api.appname)
-local gfwlist_path = path .. "gfwlist"
-local chnlist_path = path .. "chnlist"
-local chnroute_path = path .. "chnroute"
 
 api.set_default_cbi()
 
@@ -29,11 +26,87 @@ end
 s = m:section(TypedSection, "global_rules")
 s.anonymous = true
 
+s:tab("ru_proxy_list", translate("RuProxy List"))
+s:tab("ru_direct_list", translate("RuDirect List"))
 s:tab("direct_list", translate("Direct List"))
 s:tab("proxy_list", translate("Proxy List"))
 s:tab("block_list", translate("Block List"))
 s:tab("lan_ip_list", translate("Lan IP List"))
 s:tab("route_hosts", translate("Route Hosts"))
+
+-- Списки Ru* заполняются вручную или автообновлением по URL,
+-- режим каждого (Выкл/Директ/Прокси) задаётся в «Базовых настройках».
+local function ru_host_option(tab, name, description)
+	local file = path .. name
+	local o = s:taboption(tab, TextValue, name, "", "<font color='red'>" .. description .. "</font>")
+	o.rows = 15
+	o.wrap = "off"
+	o.cfgvalue = function(self, section)
+		return fs.readfile(file) or ""
+	end
+	o.write = function(self, section, value)
+		fs.writefile(file, value:gsub("\r\n", "\n"))
+		sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
+	end
+	o.remove = function(self, section, value)
+		fs.writefile(file, "")
+		sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
+	end
+	o.validate = function(self, value)
+		local hosts = {}
+		value = clean_text(value)
+		string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, api.trim(w)) end)
+		for index, host in ipairs(hosts) do
+			if host ~= "" and not host:find("^#") and not host:find("^geosite:") then
+				if not datatypes.hostname(host) then
+					return nil, host .. " " .. translate("Not valid domain name, please re-enter!")
+				end
+			end
+		end
+		return value
+	end
+	return o
+end
+
+local function ru_ip_option(tab, name, description)
+	local file = path .. name
+	local o = s:taboption(tab, TextValue, name, "", "<font color='red'>" .. description .. "</font>")
+	o.rows = 15
+	o.wrap = "off"
+	o.cfgvalue = function(self, section)
+		return fs.readfile(file) or ""
+	end
+	o.write = function(self, section, value)
+		fs.writefile(file, value:gsub("\r\n", "\n"))
+	end
+	o.remove = function(self, section, value)
+		fs.writefile(file, "")
+	end
+	o.validate = function(self, value)
+		local ipmasks = {}
+		value = clean_text(value)
+		string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, api.trim(w)) end)
+		for index, ipmask in ipairs(ipmasks) do
+			if ipmask ~= "" and not ipmask:find("^#") and not ipmask:find("^geoip:") then
+				if not ( datatypes.ipmask4(ipmask) or datatypes.ipmask6(ipmask) ) then
+					return nil, ipmask .. " " .. translate("Not valid IP format, please re-enter!")
+				end
+			end
+		end
+		return value
+	end
+	return o
+end
+
+ru_host_option("ru_proxy_list", "RuProxy",
+	translate("Domain list, one per line. Routed according to the RuProxy mode in Basic Settings (Proxy by default)."))
+ru_ip_option("ru_proxy_list", "RuProxyIp",
+	translate("IPv4/IPv6 address or CIDR list, one per line. Routed according to the RuProxyIp mode in Basic Settings (Proxy by default)."))
+
+ru_host_option("ru_direct_list", "RuDirect",
+	translate("Domain list, one per line. Routed according to the RuDirect mode in Basic Settings (Direct by default)."))
+ru_ip_option("ru_direct_list", "RuDirectIp",
+	translate("IPv4/IPv6 address or CIDR list, one per line. Routed according to the RuDirectIp mode in Basic Settings (Direct by default)."))
 
 ---- Direct Hosts
 local direct_host = path .. "direct_host"
@@ -277,47 +350,6 @@ end
 o.remove = function(self, section, value)
 	fs.writefile(hosts, "")
 end
-
-if fs.access(gfwlist_path) then
-	s:tab("gfw_list", translate("GFW List"))
-	o = s:taboption("gfw_list", DummyValue, "_gfw_fieldset")
-	o.rawhtml = true
-	o.default = string.format([[
-		<div style="display: flex; align-items: center;">
-			<input class="btn cbi-button cbi-button-add" type="button" onclick="read_gfw()" value="%s" />
-			<label id="gfw_total_lines" style="margin-left: auto; margin-right: 10px;"></label>
-		</div>
-		<textarea id="gfw_textarea" class="cbi-input-textarea" style="width: 100%%; margin-top: 10px;" rows="40" wrap="off" readonly="readonly"></textarea>
-	]], translate("Read List"))
-end
-
-if fs.access(chnlist_path) then
-	s:tab("chn_list", translate("China List") .. "(" .. translate("Domain") .. ")")
-	o = s:taboption("chn_list", DummyValue, "_chn_fieldset")
-	o.rawhtml = true
-	o.default = string.format([[
-		<div style="display: flex; align-items: center;">
-			<input class="btn cbi-button cbi-button-add" type="button" onclick="read_chn()" value="%s" />
-			<label id="chn_total_lines" style="margin-left: auto; margin-right: 10px;"></label>
-		</div>
-		<textarea id="chn_textarea" class="cbi-input-textarea" style="width: 100%%; margin-top: 10px;" rows="40" wrap="off" readonly="readonly"></textarea>
-	]], translate("Read List"))
-end
-
-if fs.access(chnroute_path) then
-	s:tab("chnroute_list", translate("China List") .. "(IP)")
-	o = s:taboption("chnroute_list", DummyValue, "_chnroute_fieldset")
-	o.rawhtml = true
-	o.default = string.format([[
-		<div style="display: flex; align-items: center;">
-			<input class="btn cbi-button cbi-button-add" type="button" onclick="read_chnroute()" value="%s" />
-			<label id="chnroute_total_lines" style="margin-left: auto; margin-right: 10px;"></label>
-		</div>
-		<textarea id="chnroute_textarea" class="cbi-input-textarea" style="width: 100%%; margin-top: 10px;" rows="40" wrap="off" readonly="readonly"></textarea>
-	]], translate("Read List"))
-end
-
-m:appendTemplate("/rule_list/js")
 
 local geo_dir = (api.uci_get_c("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 local geosite_path = geo_dir .. "/geosite.dat"

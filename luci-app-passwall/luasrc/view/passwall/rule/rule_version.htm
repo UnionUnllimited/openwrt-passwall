@@ -7,10 +7,10 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 -%>
 
 <style>
-	div.cbi-value[id$="-gfwlist_update"],
-	div.cbi-value[id$="-chnroute_update"],
-	div.cbi-value[id$="-chnroute6_update"],
-	div.cbi-value[id$="-chnlist_update"],
+	div.cbi-value[id$="-ru_proxy_update"],
+	div.cbi-value[id$="-ru_proxy_ip_update"],
+	div.cbi-value[id$="-ru_direct_update"],
+	div.cbi-value[id$="-ru_direct_ip_update"],
 	div.cbi-value[id$="-geoip_update"],
 	div.cbi-value[id$="-geosite_update"] {
 		display: none !important;
@@ -24,20 +24,20 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 	<div class="cbi-value-field">
 		<div>
 			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="gfwlist" value="1" />
-				gfwlist
+				<input class="cbi-input-checkbox" type="checkbox" name="ru_proxy" value="1" />
+				RuProxy
 			</label>
 			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="chnroute" value="1" />
-				chnroute
+				<input class="cbi-input-checkbox" type="checkbox" name="ru_proxy_ip" value="1" />
+				RuProxyIp
 			</label>
 			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="chnroute6" value="1" />
-				chnroute6
+				<input class="cbi-input-checkbox" type="checkbox" name="ru_direct" value="1" />
+				RuDirect
 			</label>
 			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="chnlist" value="1" />
-				chnlist
+				<input class="cbi-input-checkbox" type="checkbox" name="ru_direct_ip" value="1" />
+				RuDirectIp
 			</label>
 			<label>
 				<input class="cbi-input-checkbox" type="checkbox" name="geoip" value="1" />
@@ -63,8 +63,8 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 	//<![CDATA[
 	document.addEventListener('DOMContentLoaded', function () {
 		const flags = [
-			"gfwlist_update","chnroute_update","chnroute6_update",
-			"chnlist_update","geoip_update","geosite_update"
+			"ru_proxy_update","ru_proxy_ip_update","ru_direct_update",
+			"ru_direct_ip_update","geoip_update","geosite_update"
 		];
 		const bindFlags = () => {
 			let allBound = true;
@@ -157,24 +157,10 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 		let ori_val = btn.value;
 		btn.disabled = true;
 		btn.value = '<%:Rollbacking...%>';
-		var div = document.getElementById('_rule_div');
-		var domList = div.getElementsByTagName('input');
-		var checkBoxList = [];
-		var len = domList.length;
-		while(len--) {
-			var dom = domList[len];　　
-			if(dom.type == 'checkbox' && dom.checked) {
-				if(type == 'geoip' && (dom.name === 'chnroute' || dom.name === 'chnroute6')) {
-					checkBoxList.push(dom.name);
-				}
-				if(type == 'geosite' && (dom.name === 'gfwlist' || dom.name === 'chnlist')) {
-					checkBoxList.push(dom.name);
-				}
-			}
-		}
+		// Списки Ru* не выводятся из geo-файлов, поэтому откат касается только самого .dat
 		XHR.get('<%=api.url("rollback_rules")%>', {
 			type: type,
-			rules: checkBoxList.join(",")
+			rules: ""
 			},
 			function(x, data) {
 				if(x && x.status == 200 && data.code == 1) {
