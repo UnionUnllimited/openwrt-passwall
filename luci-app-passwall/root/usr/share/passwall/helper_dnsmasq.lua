@@ -4,6 +4,15 @@ local fs = api.fs
 local datatypes = api.datatypes
 local TMP = {}
 
+local function host_sources(base)
+	local t = { "/usr/share/passwall/rules/" .. base }
+	if (base == "direct_host" and RU_DIRECT_MODE == "direct")
+		or (base == "proxy_host" and RU_DIRECT_MODE == "proxy") then
+		t[#t + 1] = "/usr/share/passwall/rules/RuDirect"
+	end
+	return t
+end
+
 local function tinsert(table_name, val)
 	if table_name and type(table_name) == "table" then
 		if not TMP[table_name] then
@@ -169,6 +178,7 @@ function add_rule(var)
 	local USE_PROXY_LIST = var["-USE_PROXY_LIST"]
 	local USE_BLOCK_LIST = var["-USE_BLOCK_LIST"]
 	local USE_GFW_LIST = var["-USE_GFW_LIST"]
+	RU_DIRECT_MODE = var["-RU_DIRECT_MODE"]
 	local RU_PROXY_MODE = var["-RU_PROXY_MODE"]
 	local DEFAULT_PROXY_MODE = var["-DEFAULT_PROXY_MODE"]
 	local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
@@ -442,7 +452,8 @@ function add_rule(var)
 				}
 				--始终用国内DNS解析直连（白名单）列表
 				local geosite_arg = ""
-				local f = io.open("/usr/share/passwall/rules/direct_host")
+				for _, src in ipairs(host_sources("direct_host")) do
+				local f = io.open(src)
 				if f then
 					for line in f:lines() do
 						if not line:find("#") and line:find("geosite:") then
@@ -459,6 +470,7 @@ function add_rule(var)
 					end
 					f:close()
 					log(string.format("  - 域名白名单(whitelist)：%s", fwd_dns or "默认"))
+				end
 				end
 				if USE_GEOVIEW == "1" and geosite_arg ~= "" then
 					foreach_geosite(geosite_arg, function(line)
@@ -492,7 +504,8 @@ function add_rule(var)
 				end
 				--始终使用远程DNS解析代理（黑名单）列表
 				local geosite_arg = ""
-				local f = io.open("/usr/share/passwall/rules/proxy_host")
+				for _, src in ipairs(host_sources("proxy_host")) do
+				local f = io.open(src)
 				if f then
 					for line in f:lines() do
 						if not line:find("#") and line:find("geosite:") then
@@ -512,6 +525,7 @@ function add_rule(var)
 					end
 					f:close()
 					log(string.format("  - 代理域名表(blacklist)：%s", fwd_dns or "默认"))
+				end
 				end
 				if USE_GEOVIEW == "1" and geosite_arg ~= "" then
 					foreach_geosite(geosite_arg, function(line)

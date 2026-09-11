@@ -10,6 +10,7 @@ local USE_PROXY_LIST = var["-USE_PROXY_LIST"]
 local USE_BLOCK_LIST = var["-USE_BLOCK_LIST"]
 local GFWLIST = var["-GFWLIST"]
 local RU_PROXY_MODE = var["-RU_PROXY_MODE"]
+local RU_DIRECT_MODE = var["-RU_DIRECT_MODE"]
 local NO_IPV6_TRUST = var["-NO_IPV6_TRUST"]
 local DEFAULT_MODE = var["-DEFAULT_MODE"]
 local DEFAULT_TAG = var["-DEFAULT_TAG"]
@@ -213,11 +214,23 @@ if is_file_nonzero(file_vpslist) then
 end
 
 --直连（白名单）列表
+-- RuDirect присоединяется к тому же списку, что и direct_host, когда его
+-- режим "direct", и к proxy_host, когда "proxy". При "0" не используется.
+local function host_sources(base)
+	local t = { RULES_PATH .. "/" .. base }
+	if (base == "direct_host" and RU_DIRECT_MODE == "direct")
+		or (base == "proxy_host" and RU_DIRECT_MODE == "proxy") then
+		t[#t + 1] = RULES_PATH .. "/RuDirect"
+	end
+	return t
+end
+
 local file_direct_host = TMP_ACL_PATH .. "/direct_host"
 if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then
 	local direct_domain, lookup_direct_domain = {}, {}
 	local geosite_arg = ""
-	local f = io.open(RULES_PATH .. "/direct_host")
+	for _, src in ipairs(host_sources("direct_host")) do
+	local f = io.open(src)
 	if f then
 		for line in f:lines() do
 			if not line:find("#") and line:find("geosite:") then
@@ -231,6 +244,7 @@ if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then
 			end
 		end
 		f:close()
+	end
 	end
 	if #direct_domain > 0 then
 		local f_out = io.open(file_direct_host, "w")
@@ -267,7 +281,8 @@ local file_proxy_host = TMP_ACL_PATH .. "/proxy_host"
 if USE_PROXY_LIST == "1" and not fs.access(file_proxy_host) then
 	local proxy_domain, lookup_proxy_domain = {}, {}
 	local geosite_arg = ""
-	local f = io.open(RULES_PATH .. "/proxy_host")
+	for _, src in ipairs(host_sources("proxy_host")) do
+	local f = io.open(src)
 	if f then
 		for line in f:lines() do
 			if not line:find("#") and line:find("geosite:") then
@@ -281,6 +296,7 @@ if USE_PROXY_LIST == "1" and not fs.access(file_proxy_host) then
 			end
 		end
 		f:close()
+	end
 	end
 	if #proxy_domain > 0 then
 		local f_out = io.open(file_proxy_host, "w")

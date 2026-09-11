@@ -966,8 +966,9 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_LOCAL ipv4_addr 0
 	gen_nftset $NFTSET_LAN ipv4_addr 0 $(gen_lanlist)
 	gen_nftset $NFTSET_CHN ipv4_addr "2d"
+	# psw_chn наполняется доменами RuProxy через DNS; IP-списки Ru* грузятся
+	# ниже в psw_white/psw_black по режиму каждого из них.
 	gen_nftset $NFTSET_CHN_STATIC ipv4_addr 0
-	cat $RULES_PATH/RuProxyIp | tr -s '\n' | sed 's/#.*//' | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $NFTSET_CHN_STATIC
 	gen_nftset $NFTSET_BLACK ipv4_addr "2d"
 	gen_nftset $NFTSET_BLACK_STATIC ipv4_addr 0
 	gen_nftset $NFTSET_WHITE ipv4_addr "2d"
@@ -984,7 +985,6 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_LAN6 ipv6_addr 0 $(gen_lanlist_6)
 	gen_nftset $NFTSET_CHN6 ipv6_addr "2d"
 	gen_nftset $NFTSET_CHN6_STATIC ipv6_addr 0
-	cat $RULES_PATH/RuProxyIp | tr -s '\n' | sed 's/#.*//' | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $NFTSET_CHN6_STATIC
 	gen_nftset $NFTSET_BLACK6 ipv6_addr "2d"
 	gen_nftset $NFTSET_BLACK6_STATIC ipv6_addr 0
 	gen_nftset $NFTSET_WHITE6 ipv6_addr "2d"
@@ -1040,6 +1040,22 @@ add_firewall_rule() {
 			fi
 		}
 	}
+
+	#Ru IP列表：按各自模式决定装入直连集还是代理集
+	for _ru_entry in "RuProxyIp:${RU_PROXY_IP_MODE:-proxy}" "RuDirectIp:${RU_DIRECT_IP_MODE:-direct}"; do
+		_ru_file="${_ru_entry%%:*}"
+		_ru_mode="${_ru_entry##*:}"
+		[ -s "$RULES_PATH/$_ru_file" ] || continue
+		case "$_ru_mode" in
+			proxy) _ru_set4=$NFTSET_BLACK_STATIC; _ru_set6=$NFTSET_BLACK6_STATIC ;;
+			direct) _ru_set4=$NFTSET_WHITE_STATIC; _ru_set6=$NFTSET_WHITE6_STATIC ;;
+			*) continue ;;
+		esac
+		cat $RULES_PATH/$_ru_file | tr -s '\n' | sed 's/#.*//' | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $_ru_set4
+		cat $RULES_PATH/$_ru_file | tr -s '\n' | sed 's/#.*//' | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $_ru_set6
+		echolog "  - [$?]加载 $_ru_file 到 NFTSET（模式：$_ru_mode）"
+	done
+	unset _ru_entry _ru_file _ru_mode _ru_set4 _ru_set6
 
 	#屏蔽列表
 	[ "$USE_BLOCK_LIST_ALL" = "1" ] && {

@@ -33,6 +33,7 @@ o = s:option(DynamicList, "ru_direct_url", translatef("%s Update URL", "RuDirect
 o = s:option(DynamicList, "ru_direct_ip_url", translatef("%s Update URL", "RuDirectIp"))
 o:value("https://raw.githubusercontent.com/ipverse/rir-ip/master/country/ru/ipv4-aggregated.txt", translate("ipverse/rir-ip RU IPv4"))
 o:value("https://raw.githubusercontent.com/ipverse/rir-ip/master/country/ru/ipv6-aggregated.txt", translate("ipverse/rir-ip RU IPv6"))
+o.default = { o.keylist[1], o.keylist[2] }
 
 if has_xray or has_singbox then
 	o = s:option(Value, "geoip_url", translate("GeoIP Update URL"))

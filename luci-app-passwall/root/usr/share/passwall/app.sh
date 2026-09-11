@@ -295,7 +295,7 @@ run_dns2socks() {
 }
 
 run_chinadns_ng() {
-	local _flag _listen_port _dns_local _dns_trust _no_ipv6_trust _use_direct_list _use_proxy_list _gfwlist _ru_proxy_mode _default_mode _default_tag _no_logic_log _node _filter_https _log
+	local _flag _listen_port _dns_local _dns_trust _no_ipv6_trust _use_direct_list _use_proxy_list _gfwlist _ru_proxy_mode _ru_direct_mode _ru_direct_mode _default_mode _default_tag _no_logic_log _node _filter_https _log
 	local _extra_param=""
 	eval_set_val "$@"
 
@@ -305,7 +305,7 @@ run_chinadns_ng() {
 
 	_extra_param="-FLAG ${_flag} -NODE ${_node} -LISTEN_PORT ${_listen_port} -DNS_LOCAL ${_dns_local} -DNS_TRUST ${_dns_trust}"
 	_extra_param="${_extra_param} -USE_DIRECT_LIST ${_use_direct_list} -USE_PROXY_LIST ${_use_proxy_list} -USE_BLOCK_LIST ${_use_block_list}"
-	_extra_param="${_extra_param} -GFWLIST ${_gfwlist} -RU_PROXY_MODE ${_ru_proxy_mode} -NO_IPV6_TRUST ${_no_ipv6_trust} -DEFAULT_MODE ${_default_mode}"
+	_extra_param="${_extra_param} -GFWLIST ${_gfwlist} -RU_PROXY_MODE ${_ru_proxy_mode} -RU_DIRECT_MODE ${_ru_direct_mode} -NO_IPV6_TRUST ${_no_ipv6_trust} -DEFAULT_MODE ${_default_mode}"
 	_extra_param="${_extra_param} -DEFAULT_TAG ${_default_tag} -NFTFLAG ${nftflag} -NO_LOGIC_LOG ${_no_logic_log}"
 	_extra_param="${_extra_param} -FILTER_HTTPS ${_filter_https} -LOG_FILE ${_LOG_FILE}"
 
@@ -1218,7 +1218,7 @@ start_dns() {
 				-LISTEN_PORT ${SMARTDNS_LISTEN_PORT} -LOCAL_PORT ${SMARTDNS_LOCAL_PORT} \
 				-LOCAL_GROUP ${group_domestic:-null} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER ${GLOBAL_SOCKS_server} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" \
 				-REMOTE_DNS ${smartdns_remote_dns} -DNS_MODE ${DNS_MODE:-socks} -TUN_DNS ${TUN_DNS} \
-				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -RU_PROXY_MODE "${RU_PROXY_MODE}" \
+				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -RU_PROXY_MODE "${RU_PROXY_MODE}" -RU_DIRECT_MODE "${RU_DIRECT_MODE}" \
 				-NODE ${NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 				-SUBNET ${subnet_ip:-0} -NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 			source $APP_PATH/helper_smartdns.sh restart
@@ -1257,6 +1257,7 @@ start_dns() {
 			_use_block_list=${USE_BLOCK_LIST} \
 			_gfwlist=${USE_GFW_LIST} \
 			_ru_proxy_mode=${RU_PROXY_MODE} \
+			_ru_direct_mode=${RU_DIRECT_MODE} \
 			_default_mode=${TCP_PROXY_MODE} \
 			_default_tag=$(config_n_get @global[0] chinadns_ng_default_tag smart) \
 			_no_logic_log=0 \
@@ -1294,7 +1295,7 @@ start_dns() {
 		lua $APP_PATH/helper_dnsmasq.lua add_rule -FLAG "default" -TMP_DNSMASQ_PATH ${GLOBAL_DNSMASQ_CONF_PATH} -DNSMASQ_CONF_FILE ${GLOBAL_DNSMASQ_CONF} \
 			-DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} -TUN_DNS ${DNSMASQ_TUN_DNS} \
 			-USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
-			-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -RU_PROXY_MODE "${RU_PROXY_MODE}" \
+			-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -RU_PROXY_MODE "${RU_PROXY_MODE}" -RU_DIRECT_MODE "${RU_DIRECT_MODE}" \
 			-NODE ${NODE} -DEFAULT_PROXY_MODE ${TCP_PROXY_MODE} -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 		uci -q delete dhcp.@dnsmasq[0].min_cache_ttl
@@ -1309,7 +1310,7 @@ start_dns() {
 		lua $APP_PATH/helper_dnsmasq.lua add_rule -FLAG "default" -TMP_DNSMASQ_PATH ${GLOBAL_DNSMASQ_CONF_PATH} -DNSMASQ_CONF_FILE ${GLOBAL_DNSMASQ_CONF} \
 			-LISTEN_PORT ${GLOBAL_DNSMASQ_PORT} -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} -TUN_DNS ${DNSMASQ_TUN_DNS} \
 			-USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
-			-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -RU_PROXY_MODE "${RU_PROXY_MODE}" \
+			-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -RU_PROXY_MODE "${RU_PROXY_MODE}" -RU_DIRECT_MODE "${RU_DIRECT_MODE}" \
 			-NODE ${NODE} -DEFAULT_PROXY_MODE ${TCP_PROXY_MODE} -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 		ln_run "$(first_type dnsmasq)" "dnsmasq_default" "/dev/null" -C ${GLOBAL_DNSMASQ_CONF} -x ${GLOBAL_ACL_PATH}/dnsmasq.pid
@@ -1399,6 +1400,7 @@ acl_app() {
 				use_block_list=${use_block_list:-1}
 				use_gfw_list=${use_gfw_list:-1}
 				ru_proxy_mode=${ru_proxy_mode:-proxy}
+				ru_direct_mode=${ru_direct_mode:-direct}
 				tcp_proxy_mode=${tcp_proxy_mode:-proxy}
 				udp_proxy_mode=${udp_proxy_mode:-proxy}
 				filter_proxy_ipv6=${filter_proxy_ipv6:-0}
@@ -1513,6 +1515,7 @@ acl_app() {
 										_use_block_list=${use_block_list} \
 										_gfwlist=${use_gfw_list} \
 										_ru_proxy_mode=${ru_proxy_mode} \
+										_ru_direct_mode=${ru_direct_mode} \
 										_default_mode=${tcp_proxy_mode} \
 										_default_tag=${chinadns_ng_default_tag:-smart} \
 										_no_logic_log=1 \
@@ -1528,7 +1531,7 @@ acl_app() {
 								local dnsmasq_conf_path=${acl_path}/dnsmasq.d
 								lua $APP_PATH/helper_dnsmasq.lua add_rule -FLAG ${sid} -TMP_DNSMASQ_PATH ${dnsmasq_conf_path} -DNSMASQ_CONF_FILE ${dnsmasq_conf} \
 									-LISTEN_PORT ${dnsmasq_port} -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS $LOCAL_DNS \
-									-USE_DIRECT_LIST "${use_direct_list}" -USE_PROXY_LIST "${use_proxy_list}" -USE_BLOCK_LIST "${use_block_list}" -USE_GFW_LIST "${use_gfw_list}" -RU_PROXY_MODE "${ru_proxy_mode}" \
+									-USE_DIRECT_LIST "${use_direct_list}" -USE_PROXY_LIST "${use_proxy_list}" -USE_BLOCK_LIST "${use_block_list}" -USE_GFW_LIST "${use_gfw_list}" -RU_PROXY_MODE "${ru_proxy_mode}" -RU_DIRECT_MODE "${ru_direct_mode}" \
 									-TUN_DNS "127.0.0.1#${_dns_port}" -USE_DEFAULT_DNS "${use_default_dns:-direct}" -CHINADNS_DNS ${_china_ng_listen:-0} \
 									-NODE $node -DEFAULT_PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${dnsmasq_filter_proxy_ipv6:-0} -NFTFLAG ${nftflag:-0} \
 									-NO_LOGIC_LOG 1
@@ -1596,7 +1599,7 @@ acl_app() {
 				fi
 				[ "${use_fakedns}" = "1" ] && set_cache_var "ACL_${sid}_fakedns" "1"
 			}
-			unset enabled sid remarks sources interface tcp_no_redir_ports udp_no_redir_ports use_global_config node use_direct_list use_proxy_list use_block_list use_gfw_list ru_proxy_mode tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh remote_dns_client_ip
+			unset enabled sid remarks sources interface tcp_no_redir_ports udp_no_redir_ports use_global_config node use_direct_list use_proxy_list use_block_list use_gfw_list ru_proxy_mode ru_direct_mode tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh remote_dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac source_list node_port config_file _extra_param dns_cache_key log loglevel
 			unset _china_ng_listen _chinadns_local_dns _direct_dns_mode chinadns_ng_default_tag dnsmasq_filter_proxy_ipv6 remote_fakedns force_https_soa use_fakedns remote_rewrite_ttl
 		done
@@ -1749,6 +1752,9 @@ get_config() {
 	USE_BLOCK_LIST=$(config_n_get @global[0] use_block_list 1)
 	USE_GFW_LIST=$(config_n_get @global[0] use_gfw_list 1)
 	RU_PROXY_MODE=$(config_n_get @global[0] ru_proxy_mode proxy)
+	RU_PROXY_IP_MODE=$(config_n_get @global[0] ru_proxy_ip_mode proxy)
+	RU_DIRECT_MODE=$(config_n_get @global[0] ru_direct_mode direct)
+	RU_DIRECT_IP_MODE=$(config_n_get @global[0] ru_direct_ip_mode direct)
 	TCP_PROXY_MODE=$(config_n_get @global[0] tcp_proxy_mode proxy)
 	UDP_PROXY_MODE=$(config_n_get @global[0] udp_proxy_mode proxy)
 	[ "${TCP_PROXY_MODE}" != "disable" ] && TCP_PROXY_MODE="proxy"

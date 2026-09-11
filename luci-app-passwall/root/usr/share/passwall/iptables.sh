@@ -897,8 +897,22 @@ add_firewall_rule() {
 	ipset -! create $IPSET_WHITE6 nethash family inet6 maxelem 1048576 timeout 172800
 	ipset -! create $IPSET_BLOCK6 nethash family inet6 maxelem 1048576 timeout 172800
 
-	cat $RULES_PATH/RuProxyIp | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_CHN &/g" -e "s/$/ timeout 0/g" | ipset -! -R
-	cat $RULES_PATH/RuProxyIp | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_CHN6 &/g" -e "s/$/ timeout 0/g" | ipset -! -R
+	#Ru IP列表：按各自模式决定装入直连集还是代理集
+	#psw_chn 由 RuProxy 域名经 DNS 填充，这里只处理 IP 列表
+	for _ru_entry in "RuProxyIp:${RU_PROXY_IP_MODE:-proxy}" "RuDirectIp:${RU_DIRECT_IP_MODE:-direct}"; do
+		_ru_file="${_ru_entry%%:*}"
+		_ru_mode="${_ru_entry##*:}"
+		[ -s "$RULES_PATH/$_ru_file" ] || continue
+		case "$_ru_mode" in
+			proxy) _ru_set4=$IPSET_BLACK; _ru_set6=$IPSET_BLACK6 ;;
+			direct) _ru_set4=$IPSET_WHITE; _ru_set6=$IPSET_WHITE6 ;;
+			*) continue ;;
+		esac
+		cat $RULES_PATH/$_ru_file | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $_ru_set4 &/g" -e "s/$/ timeout 0/g" | ipset -! -R
+		cat $RULES_PATH/$_ru_file | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $_ru_set6 &/g" -e "s/$/ timeout 0/g" | ipset -! -R
+		echolog "  - [$?]加载 $_ru_file 到 IPSET（模式：$_ru_mode）"
+	done
+	unset _ru_entry _ru_file _ru_mode _ru_set4 _ru_set6
 
 	#导入规则列表、分流规则中的IP列表
 	local USE_PROXY_LIST_ALL=${USE_PROXY_LIST}
