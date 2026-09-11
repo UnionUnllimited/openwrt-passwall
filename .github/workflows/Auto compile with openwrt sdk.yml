@@ -115,12 +115,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container_tag: x86_64-21.02.7
-            ver: "22.03-"
-
-          - container_tag: x86_64-24.10.5
-            ver: "23.05-24.10"
-
+          # Собираем только под OpenWrt 25.12+; пакет arch-independent (LUCI_PKGARCH:=all).
+          # Сборки под 22.03- и 23.05-24.10 убраны — вернуть можно, дописав сюда
+          # container_tag: x86_64-21.02.7 / x86_64-24.10.5 с соответствующим ver.
           - container_tag: x86-64-SNAPSHOT
             ver: "25.12+"
     steps:

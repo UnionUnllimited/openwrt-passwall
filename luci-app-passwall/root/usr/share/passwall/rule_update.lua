@@ -14,19 +14,20 @@ local arg3 = arg[3]
 local nftable_name = "inet passwall"
 local rule_path = "/usr/share/passwall/rules"
 local reboot = 0
-local gfwlist_update = "0"
-local chnroute_update = "0"
-local chnroute6_update = "0"
-local chnlist_update = "0"
+local ru_proxy_update = "0"
+local ru_proxy_ip_update = "0"
+local ru_direct_update = "0"
+local ru_direct_ip_update = "0"
 local geoip_update = "0"
 local geosite_update = "0"
 
-local excluded_domain = {"apple.com","sina.cn","sina.com.cn","baidu.com","byr.cn","jlike.com","weibo.com","zhongsou.com","youdao.com","sogou.com","so.com","soso.com","aliyun.com","taobao.com","jd.com","qq.com","bing.com"}
+-- Домены, которые не должны попадать в списки, даже если встретились в источнике.
+local excluded_domain = {}
 
-local gfwlist_url = uci_get("@global_rules[0]", "gfwlist_url") or {"https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/gfw.txt"}
-local chnroute_url = uci_get("@global_rules[0]", "chnroute_url") or {"https://ispip.clang.cn/all_cn.txt"}
-local chnroute6_url = uci_get("@global_rules[0]", "chnroute6_url") or {"https://ispip.clang.cn/all_cn_ipv6.txt"}
-local chnlist_url = uci_get("@global_rules[0]", "chnlist_url") or {"https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}
+local ru_proxy_url = uci_get("@global_rules[0]", "ru_proxy_url") or {}
+local ru_proxy_ip_url = uci_get("@global_rules[0]", "ru_proxy_ip_url") or {}
+local ru_direct_url = uci_get("@global_rules[0]", "ru_direct_url") or {}
+local ru_direct_ip_url = uci_get("@global_rules[0]", "ru_direct_ip_url") or {}
 local geoip_url = uci_get("@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
 local geosite_url = uci_get("@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 local asset_location = uci_get("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
@@ -406,30 +407,25 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 	local rule_dataset = {}
 	local file_tmp = "/tmp/" .. rule_name .. "_tmp"
 	local rule_final_path = rule_path .. "/" .. rule_name
-	if geo2rule == "1" then
-		url = {"geo2rule"}
-		log(rule_name.. " 开始生成...")
-	else
-		log(rule_name.. " 开始更新...")
+	log(rule_name.. " 开始更新...")
+	if type(url) ~= "table" then url = (url and url ~= "") and { url } or {} end
+	if #url == 0 then
+		log(rule_name .. " 未配置更新地址，跳过。")
+		return 0
 	end
 
 	for k, v in ipairs(url) do
 		local current_file = "/tmp/" .. rule_name .. "_dl" .. k
 		local success = false
 
-		if v ~= "geo2rule" then
-			for i = 1, max_attempts do
-				local return_code, http_code, header = curl(v, current_file)
-				if return_code == 0 and not non_file_check(current_file, header) then
-					success = true
-					break
-				end
-				os.remove(current_file)
-				log(string.format("%s 第%d条规则下载失败 (HTTP:%s)，正在进行第%d次尝试...", rule_name, k, tostring(http_code), i))
+		for i = 1, max_attempts do
+			local return_code, http_code, header = curl(v, current_file)
+			if return_code == 0 and not non_file_check(current_file, header) then
+				success = true
+				break
 			end
-		else
-			if not GeoToRule(rule_name, rule_type, current_file) then return 1 end
-			success = true
+			os.remove(current_file)
+			log(string.format("%s 第%d条规则下载失败 (HTTP:%s)，正在进行第%d次尝试...", rule_name, k, tostring(http_code), i))
 		end
 
 		if success then
@@ -456,14 +452,11 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 									rule_dataset[match] = true
 								end
 							end
-						elseif rule_type == "ip4" then
+						elseif rule_type == "ip4" or rule_type == "ip6" or rule_type == "ip" then
+							-- "ip" принимает и IPv4, и IPv6: списки Ru* хранят их в одном файле.
 							local function is_0dot(s) -- "^0%..*"
 								return s and s:byte(1)==48 and s:byte(2)==46
 							end
-							if is_ipv4_cidr(line) and not is_0dot(line) then
-								rule_dataset[line] = true
-							end
-						elseif rule_type == "ip6" then
 							local function is_double_colon_cidr(s) -- "^::(/%d+)?$"
 							if not s or s:byte(1)~=58 or s:byte(2)~=58 then return false end
 								local l = #s
@@ -475,7 +468,9 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 								end
 								return true
 							end
-							if is_ipv6_cidr(line) and not is_double_colon_cidr(line) then
+							if rule_type ~= "ip6" and is_ipv4_cidr(line) and not is_0dot(line) then
+								rule_dataset[line] = true
+							elseif rule_type ~= "ip4" and is_ipv6_cidr(line) and not is_double_colon_cidr(line) then
 								rule_dataset[line] = true
 							end
 						end
@@ -508,16 +503,6 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 		local new_md5 = sys.exec(string.format("md5sum %s 2>/dev/null | awk '{print $1}'", file_tmp)):gsub("\n", "")
 
 		if old_md5 ~= new_md5 then
-			if api.is_finded("fw4") and (rule_type == "ip4" or rule_type == "ip6") then
-				local nft_file = file_tmp .. ".nft"
-				local set_name = "psw_" .. rule_name
-				if rule_name == "chnroute" then set_name = "psw_chn"
-				elseif rule_name == "chnroute6" then set_name = "psw_chn6" end
-                
-				local addr_type = (rule_type == "ip4") and "ipv4_addr" or "ipv6_addr"
-				gen_cache(set_name, addr_type, file_tmp, nft_file)
-				os.execute(string.format("mv -f %s %s.nft", nft_file, rule_final_path))
-			end
 			os.execute(string.format("mv -f %s %s", file_tmp, rule_final_path))
 			if not rollback then reboot = 1 end
 			if fail_count > 0 then
@@ -619,20 +604,20 @@ local function fetch_geofile(geo_name, geo_type, url)
 	return 0
 end
 
-local function fetch_gfwlist()
-	fetch_rule("gfwlist","domain",gfwlist_url,true)
+local function fetch_ru_proxy()
+	fetch_rule("RuProxy","domain",ru_proxy_url,false)
 end
 
-local function fetch_chnroute()
-	fetch_rule("chnroute","ip4",chnroute_url,false)
+local function fetch_ru_proxy_ip()
+	fetch_rule("RuProxyIp","ip",ru_proxy_ip_url,false)
 end
 
-local function fetch_chnroute6()
-	fetch_rule("chnroute6","ip6",chnroute6_url,false)
+local function fetch_ru_direct()
+	fetch_rule("RuDirect","domain",ru_direct_url,false)
 end
 
-local function fetch_chnlist()
-	fetch_rule("chnlist","domain",chnlist_url,false)
+local function fetch_ru_direct_ip()
+	fetch_rule("RuDirectIp","ip",ru_direct_ip_url,false)
 end
 
 local function fetch_geoip()
@@ -645,17 +630,17 @@ end
 
 if arg2 then
 	string.gsub(arg2, '[^' .. "," .. ']+', function(w)
-		if w == "gfwlist" then
-			gfwlist_update = "1"
+		if w == "ru_proxy" then
+			ru_proxy_update = "1"
 		end
-		if w == "chnroute" then
-			chnroute_update = "1"
+		if w == "ru_proxy_ip" then
+			ru_proxy_ip_update = "1"
 		end
-		if w == "chnroute6" then
-			chnroute6_update = "1"
+		if w == "ru_direct" then
+			ru_direct_update = "1"
 		end
-		if w == "chnlist" then
-			chnlist_update = "1"
+		if w == "ru_direct_ip" then
+			ru_direct_ip_update = "1"
 		end
 		if w == "geoip" then
 			geoip_update = "1"
@@ -666,14 +651,14 @@ if arg2 then
 	end)
 	if rollback then arg2 = nil end
 else
-	gfwlist_update = uci_get("@global_rules[0]", "gfwlist_update") or "1"
-	chnroute_update = uci_get("@global_rules[0]", "chnroute_update") or "1"
-	chnroute6_update = uci_get("@global_rules[0]", "chnroute6_update") or "1"
-	chnlist_update = uci_get("@global_rules[0]", "chnlist_update") or "1"
+	ru_proxy_update = uci_get("@global_rules[0]", "ru_proxy_update") or "1"
+	ru_proxy_ip_update = uci_get("@global_rules[0]", "ru_proxy_ip_update") or "1"
+	ru_direct_update = uci_get("@global_rules[0]", "ru_direct_update") or "1"
+	ru_direct_ip_update = uci_get("@global_rules[0]", "ru_direct_ip_update") or "1"
 	geoip_update = uci_get("@global_rules[0]", "geoip_update") or "1"
 	geosite_update = uci_get("@global_rules[0]", "geosite_update") or "1"
 end
-if geo2rule ~= "1" and gfwlist_update == "0" and chnroute_update == "0" and chnroute6_update == "0" and chnlist_update == "0" and geoip_update == "0" and geosite_update == "0" then
+if ru_proxy_update == "0" and ru_proxy_ip_update == "0" and ru_direct_update == "0" and ru_direct_ip_update == "0" and geoip_update == "0" and geosite_update == "0" then
 	os.exit(0)
 end
 
@@ -719,87 +704,41 @@ local function remove_tmp_geofile(name)
 	os.remove("/tmp/" .. name .. ".dat.sha256sum")
 end
 
-if geo2rule == "1" then
-	if geoip_update == "1" and not rollback then
-		log("geoip 开始更新...")
-		safe_call(fetch_geoip, "更新geoip发生错误...")
-		remove_tmp_geofile("geoip")
-	end
+-- Списки Ru* берутся только из URL-источников: генерация из geo-файлов
+-- (geo2rule) к ним неприменима, она умела лишь списки cn/gfw.
+if ru_proxy_update == "1" then
+	safe_call(fetch_ru_proxy, "更新 RuProxy 发生错误...")
+end
 
-	if geosite_update == "1" and not rollback then
-		log("geosite 开始更新...")
-		safe_call(fetch_geosite, "更新geosite发生错误...")
-		remove_tmp_geofile("geosite")
-	end
+if ru_proxy_ip_update == "1" then
+	safe_call(fetch_ru_proxy_ip, "更新 RuProxyIp 发生错误...")
+end
 
-	-- 如果是手动更新(arg2存在)始终生成规则
-	if arg2 then
-		geoip_update_ok, geosite_update_ok = true, true
-	end
-	if not rollback then
-		chnroute_update, chnroute6_update, gfwlist_update, chnlist_update = "1", "1", "1", "1"
-	end
+if ru_direct_update == "1" then
+	safe_call(fetch_ru_direct, "更新 RuDirect 发生错误...")
+end
 
-	if geoip_update_ok then
-		if fs.access(asset_location .. "geoip.dat") then
-			if chnroute_update == "1" then
-				safe_call(fetch_chnroute, "生成chnroute发生错误...")
-			end
-			if chnroute6_update == "1" then
-				safe_call(fetch_chnroute6, "生成chnroute6发生错误...")
-			end
-		else
-			log("geoip.dat 文件不存在,跳过规则生成。")
-		end
-	end
+if ru_direct_ip_update == "1" then
+	safe_call(fetch_ru_direct_ip, "更新 RuDirectIp 发生错误...")
+end
 
-	if geosite_update_ok then
-		if fs.access(asset_location .. "geosite.dat") then
-			if gfwlist_update == "1" then
-				safe_call(fetch_gfwlist, "生成gfwlist发生错误...")
-			end
-			if chnlist_update == "1" then
-				safe_call(fetch_chnlist, "生成chnlist发生错误...")
-			end
-		else
-			log("geosite.dat 文件不存在,跳过规则生成。")
-		end
-	end
-else
-	if gfwlist_update == "1" then
-		safe_call(fetch_gfwlist, "更新gfwlist发生错误...")
-	end
+if geoip_update == "1" then
+	log("geoip 开始更新...")
+	safe_call(fetch_geoip, "更新geoip发生错误...")
+	remove_tmp_geofile("geoip")
+end
 
-	if chnroute_update == "1" then
-		safe_call(fetch_chnroute, "更新chnroute发生错误...")
-	end
-
-	if chnroute6_update == "1" then
-		safe_call(fetch_chnroute6, "更新chnroute6发生错误...")
-	end
-
-	if chnlist_update == "1" then
-		safe_call(fetch_chnlist, "更新chnlist发生错误...")
-	end
-
-	if geoip_update == "1" then
-		log("geoip 开始更新...")
-		safe_call(fetch_geoip, "更新geoip发生错误...")
-		remove_tmp_geofile("geoip")
-	end
-
-	if geosite_update == "1" then
-		log("geosite 开始更新...")
-		safe_call(fetch_geosite, "更新geosite发生错误...")
-		remove_tmp_geofile("geosite")
-	end
+if geosite_update == "1" then
+	log("geosite 开始更新...")
+	safe_call(fetch_geosite, "更新geosite发生错误...")
+	remove_tmp_geofile("geosite")
 end
 
 if not rollback then
-	uci_set("@global_rules[0]", "gfwlist_update", gfwlist_update)
-	uci_set("@global_rules[0]", "chnroute_update", chnroute_update)
-	uci_set("@global_rules[0]", "chnroute6_update", chnroute6_update)
-	uci_set("@global_rules[0]", "chnlist_update", chnlist_update)
+	uci_set("@global_rules[0]", "ru_proxy_update", ru_proxy_update)
+	uci_set("@global_rules[0]", "ru_proxy_ip_update", ru_proxy_ip_update)
+	uci_set("@global_rules[0]", "ru_direct_update", ru_direct_update)
+	uci_set("@global_rules[0]", "ru_direct_ip_update", ru_direct_ip_update)
 	uci_set("@global_rules[0]", "geoip_update", geoip_update)
 	uci_set("@global_rules[0]", "geosite_update", geosite_update)
 	uci_save(true)
