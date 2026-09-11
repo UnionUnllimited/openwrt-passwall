@@ -60,10 +60,13 @@ chmod +x /usr/share/passwall/*.sh /etc/init.d/passwall /etc/init.d/passwall_serv
 say "Перенос списков"
 [ -f "$RULES/chnlist" ]  && mv -f "$RULES/chnlist"  "$RULES/RuProxy"   && echo "    chnlist -> RuProxy"
 [ -f "$RULES/chnroute" ] && mv -f "$RULES/chnroute" "$RULES/RuProxyIp" && echo "    chnroute -> RuProxyIp"
+# chnroute6 намеренно не дописывается в RuProxyIp: на установках, где
+# chnroute подменяли своим списком, а chnroute6 оставляли нетронутым,
+# это занесло бы чужие IPv6-подсети в список проксирования. Файл
+# сохраняем рядом — если он нужен, содержимое переносится вручную.
 [ -f "$RULES/chnroute6" ] && {
-	cat "$RULES/chnroute6" >> "$RULES/RuProxyIp"
-	rm -f "$RULES/chnroute6"
-	echo "    chnroute6 дописан в RuProxyIp"
+	mv -f "$RULES/chnroute6" "$RULES/chnroute6.old"
+	echo "    chnroute6 отложен в chnroute6.old, в RuProxyIp не добавлен"
 }
 rm -f "$RULES/gfwlist" "$RULES"/*.nft
 for f in RuProxy RuProxyIp RuDirect RuDirectIp; do
